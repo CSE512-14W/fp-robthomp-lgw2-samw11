@@ -1,2 +1,3 @@
 #Ignore general files
 *~
+.DS_Store
