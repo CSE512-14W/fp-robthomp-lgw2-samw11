@@ -6,27 +6,58 @@
 #inthis case we use it to eliminate other versions of hr3590
 $excluBill = "hr3590";
 
+$billID = 446419;
+
+$billVersionID = 10010;
+
 #this is used as the lower limit for the SWalign field in sectcomp
-$SWalignLimit = "1.0";
+$SWalignLimit = 1.0;
 
 #this is used as the lower limit for the charMatch field in sectcomp
-$charMatchLimit = "200";
+$charMatchLimit = 200;
 
 #this is used as the lower limit for either the propA or propB fields in sectcomp (at least one must be above this)
-$propLimit = "0.7";
+$propLimit = 0.7;
 
 $link = mysqli_connect("master.cmu4mm2fobzj.us-west-2.rds.amazonaws.com","habbal","Dp6wNcah47awWWbL","cbp_main",3306) or die("Error " . mysqli_error($link));
 
-$query = "(SELECT comp.charMatch, comp.gaps, comp.SWalign, comp.docB, comp.textA, comp.textB, comp.docAstart, comp.docAend, comp.docBstart, comp.docBend, comp.differencesA, comp.differencesB, comp.compLabel, bills.IntrDate, bills.Party, bills.URL FROM bills_sectcomp as comp, bills_sections as sec, bills WHERE comp.idA = " . $_GET["section"] . " AND sec.Bill_id = bills.id AND comp.idB = sec.sec_id AND NOT comp.docB like '%" . $excluBill . "%' AND SWalign > " . $SWalignLimit . " AND charMatch > " . $charMatchLimit . " AND ( propA > " . $propLimit . " OR propB > " . $propLimit . ")) UNION (SELECT comp.charMatch, comp.gaps, comp.SWalign, comp.docA as docB, comp.textA as textB, comp.textB as textA, comp.docAstart as docBstart, comp.docAend as docBend, comp.docBstart as docAstart, comp.docBend as docAend, comp.differencesA as differencesB, comp.differencesB as differencesA, comp.compLabel, bills.IntrDate, bills.Party, bills.URL FROM bills_sectcomp as comp, bills_sections as sec, bills WHERE comp.idB = " . $_GET["section"] . " AND sec.Bill_id = bills.id AND comp.idA = sec.sec_id AND NOT comp.docA like '%" . $excluBill . "%' AND SWalign > " . $SWalignLimit . " AND charMatch > " . $charMatchLimit . " AND ( propA > " . $propLimit . " OR propB > " . $propLimit . "))" or die("Error in the consult.." . mysqli_error($link));
+$query = "(
+	SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docB, comp.textA, comp.textB, comp.docAstart, comp.docAend, comp.docBstart, comp.docBend, comp.differencesA, comp.differencesB, comp.compLabel, bills.IntrDate, bills.Party, bills.URL
+		FROM bills_sectcomp as comp, bills_sections as sec, bills 
+		WHERE comp.idA = " . $_GET["section"] . " 
+			AND sec.Bill_id = bills.id 
+			AND comp.idB = sec.sec_id 
+			AND NOT sec.Bill_id = " . $billID . " 
+			AND comp.SWalign > " . $SWalignLimit . "
+			AND comp.charMatch > " . $charMatchLimit . "
+			AND (
+				comp.propA > " . $propLimit . "
+				OR comp.propB > " . $propLimit . "
+			)
+	) 
+	UNION 
+	(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docA as docB, comp.textA as textB, comp.textB as textA, comp.docAstart as docBstart, comp.docAend as docBend, comp.docBstart as docAstart, comp.docBend as docAend, comp.differencesA as differencesB, comp.differencesB as differencesA, comp.compLabel, bills.IntrDate, bills.Party, bills.URL 
+		FROM bills_sectcomp as comp, bills_sections as sec, bills 
+		WHERE comp.idB = " . $_GET["section"] . " 
+			AND sec.Bill_id = bills.id 
+			AND comp.idA = sec.sec_id 
+			AND NOT sec.Bill_id = " . $billID . "
+			AND comp.SWalign > " . $SWalignLimit . "
+			AND comp.charMatch > " . $charMatchLimit . "
+			AND (
+				comp.propA > " . $propLimit . "
+				OR comp.propB > " . $propLimit . "
+			)
+	)" or die("Error in the consult.." . mysqli_error($link));
 
 /*
 (SELECT comp.charMatch, comp.gaps, comp.SWalign, comp.docB, comp.textA, comp.textB, comp.docAstart, comp.docAend, comp.docBstart, comp.docBend, comp.differencesA, comp.differencesB, comp.compLabel, bills.IntrDate, bills.Party, bills.URL 
 	FROM bills_sectcomp as comp, bills_sections as sec, bills 
-	WHERE comp.idA = " . $_GET["section"] . " AND sec.Bill_id = bills.id AND comp.idB = sec.sec_id AND NOT comp.docB like '%" . $excluBill . "%' AND SWalign > " . $SWalignLimit . " AND charMatch > " . $charMatchLimit . " AND ( propA > " . $propLimit . " OR propB > " . $propLimit . "))
+	WHERE comp.idA = " . $_GET["section"] . " AND sec.Bill_id = bills.id AND comp.idB = sec.sec_id AND NOT sec.Bill_id = " . $billID . " AND SWalign > " . $SWalignLimit . " AND charMatch > " . $charMatchLimit . " AND ( propA > " . $propLimit . " OR propB > " . $propLimit . "))
 UNION
 (SELECT comp.charMatch, comp.gaps, comp.SWalign, comp.docA as docB, comp.textA as textB, comp.textB as textA, comp.docAstart as docBstart, comp.docAend as docBend, comp.docBstart as docAstart, comp.docBend as docAend, comp.differencesA as differencesB, comp.differencesB as differencesA, comp.compLabel, bills.IntrDate, bills.Party, bills.URL
 	FROM bills_sectcomp as comp, bills_sections as sec, bills
-	WHERE comp.idB = " . $_GET["section"] . " AND sec.Bill_id = bills.id AND comp.idA = sec.sec_id AND NOT comp.docA like '%" . $excluBill . "%' AND SWalign > " . $SWalignLimit . " AND charMatch > " . $charMatchLimit . " AND ( propA > " . $propLimit . " OR propB > " . $propLimit . "))
+	WHERE comp.idB = " . $_GET["section"] . " AND sec.Bill_id = bills.id AND comp.idA = sec.sec_id AND NOT sec.Bill_id = " . $billID . " AND SWalign > " . $SWalignLimit . " AND charMatch > " . $charMatchLimit . " AND ( propA > " . $propLimit . " OR propB > " . $propLimit . "))
 */
 
 $result = $link->query($query);

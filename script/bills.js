@@ -295,13 +295,19 @@
 		function toThirdLayer(d){
 			console.log("sec id: " + d.secID);
 			thirdLayer(d.secID);
+			
+				
 		}
 
 		drawRect_2();
 	}
 
 	function thirdLayer(secID){
-
+		$.getJSON( "data/data.php", { section: secID} )
+				.done(function( data ) {
+					console.log(data);
+					
+				});
 	}
 
 
