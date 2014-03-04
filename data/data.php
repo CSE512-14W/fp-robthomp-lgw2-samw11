@@ -173,7 +173,7 @@ if (!isset($_GET["section"])) {
 		$arr["differencesA"] = $row["differencesB"];
 		$arr["differencesB"] = $row["differencesB"];
 		$arr["compLabel"] = $row["compLabel"];
-		$arr["IntrDate"] = $row["IntrDate"];
+		$arr["IntrDate"] = strtotime($row["IntrDate"]);
 		$arr["Party"] = $row["Party"];
 		$arr["URL"] = $row["URL"];
 		$rows[] = $arr;

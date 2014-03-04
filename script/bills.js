@@ -13,7 +13,8 @@
 		noMatchColor = "grey"
 		rectBound = "black",
 		layerTwoBackgroundColor = d3.rgb(200,200,200)
-		highlight = "white";
+		highlight = "white",
+		layerThreeBackgroundColor = d3.rgb(200,200,200);
 
 	// data in json format		
 	var republicData = [],
@@ -35,6 +36,12 @@
 		secondLayerHeight = height,
 		rectSize_2 = secondLayerWidth * 0.9,
 		boundary = secondLayerWidth * 0.1;
+
+	// third layer variables
+	var thirdLayerWidth = 6*width / 10,
+		thirdLayerHeight = height,
+		alignChartWidth = thirdLayerWidth - 50,
+		alignChartHeight = height / 3;
 
 	// transition time
 	var transTime = 1000;
@@ -70,6 +77,11 @@
 				.attr("id", "secondLayout")
 				.attr("clip-path", "url(#clip)")
 				.attr("transform", "translate(0," + titleHight + ")");
+	
+	var comp = d3.select("svg")
+				.append("g")
+				.attr("id", "thirdLayout")
+				.attr("transform", "translate(" + (firstLayerWidth + secondLayerWidth + 50) + "," + titleHight + ")");
 
 	// Logic of the first layer
 	function firstLayer(){
@@ -303,11 +315,56 @@
 	}
 
 	function thirdLayer(secID){
+		comp.selectAll("rect").remove();
+		comp.selectAll("text").remove();
+		
 		$.getJSON( "data/data.php", { section: secID} )
-				.done(function( data ) {
-					console.log(data);
-					
-				});
+			.done(function( data ) {
+				console.log(data);
+				drawAlignChart(data);
+				comp.append("text")
+					.attr("x", 10)
+					.attr("y", alignChartHeight + 30)
+					.attr("width", thirdLayerWidth)
+					.text(data.sectionText)
+			});
+		
+		function drawAlignChart(data) {
+			var lengthScale = d3.scale.linear()
+				.domain([0, data.sectionText.length])
+				.range([0, alignChartHeight]);
+			
+			var timeScale = d3.scale.linear()
+				.domain([1230940800, 1294012800])
+				.range([0, alignChartWidth]);
+				
+			comp.append("rect")
+				.attr("x", 10)
+				.attr("y", 10)
+				.attr("height", alignChartHeight)
+				.attr("width", 2)
+				.attr("fill", "black")
+			
+			comp.append("rect")
+				.attr("d", "M10," + (alignChartHeight + 10) + " L" + (alignChartHeight + 10) + "," + (alignChartHeight + 10))
+				.attr("x", 10)
+				.attr("y", alignChartHeight + 10)
+				.attr("height", 2)
+				.attr("width", alignChartWidth)
+				.attr("fill", "black")
+		
+			comp.selectAll("alignments")
+				.data(data.matches)
+				.enter()
+					.append("rect")
+					.attr("class", "alignments")
+					.attr("x", function(d) { return timeScale(d.IntrDate) + 10 - 2; })
+					.attr("y", function(d) { return 10 + alignChartHeight - lengthScale(parseInt(d.docAend)); })
+					.attr("width", 4)
+					.attr("height", function(d) { return lengthScale(parseInt(d.docAend)) - lengthScale(parseInt(d.docAstart));})
+					.attr("fill", function(d) { if (d.Party == 100) { return democraticColor; } else { return republicanColor; }})
+					.attr("stroke-width", 1)
+		}
 	}
 
 
