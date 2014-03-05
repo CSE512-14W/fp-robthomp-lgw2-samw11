@@ -64,7 +64,7 @@
 					.attr("id", "visTitle")
 					.attr("x", margin)
 					.attr("y", 2*margin)
-					.text("How a bill become a law")
+					.text("How a bill becomes a law")
 					.attr("font-size", fontSize);
 
 	var svg = d3.select("svg")
