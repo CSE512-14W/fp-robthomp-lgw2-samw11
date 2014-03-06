@@ -38,10 +38,11 @@
 		boundary = secondLayerWidth * 0.1;
 
 	// third layer variables
-	var thirdLayerWidth = 6*width / 10,
-		thirdLayerHeight = height,
+	var thirdLayerWidth = 3*width / 5,
+		thirdLayerHeight = height / 3 + 40,
 		alignChartWidth = thirdLayerWidth - 50,
-		alignChartHeight = height / 3;
+		alignChartHeight = height / 3,
+		alignChartPadding = 10;
 
 	// transition time
 	var transTime = 1000;
@@ -82,6 +83,21 @@
 				.append("g")
 				.attr("id", "thirdLayout")
 				.attr("transform", "translate(" + (firstLayerWidth + secondLayerWidth + 50) + "," + titleHight + ")");
+
+	var textDiv = d3.select("body")
+					.append("div")
+					.style({
+						"position": "absolute", 
+						"top": titleHight + thirdLayerHeight, 
+						"left": firstLayerWidth + secondLayerWidth + 50,
+						"height": height - thirdLayerHeight,
+						"width": thirdLayerHeight});
+	
+	d3.select("svg")
+		.style({
+			"position": "absolute", 
+			"top": 10, 
+			"left": 10});
 
 	// Logic of the first layer
 	function firstLayer(){
@@ -315,20 +331,20 @@
 	}
 
 	function thirdLayer(secID){
-		comp.selectAll("rect").remove();
-		comp.selectAll("text").remove();
+		comp.select("#alignChart").remove();
+		textDiv.select("pre").remove();
 		
 		$.getJSON( "data/data.php", { section: secID} )
 			.done(function( data ) {
 				console.log(data);
 				drawAlignChart(data);
-				comp.append("text")
-					.attr("x", 10)
-					.attr("y", alignChartHeight + 30)
-					.attr("width", thirdLayerWidth)
-					.text(data.sectionText)
+				textDiv.append("pre")
+					.style("width", thirdLayerWidth)
+					.style({"position": "absolute", "top": titleHight + thirdLayerHeight + "px", "left": firstLayerWidth + secondLayerWidth + 50 + "px"})
+					.html("<span style='background-color: red'>if this is highlighted, this method works</span>" + data.sectionText)
 			});
 		
+		//still need to add axis labels
 		function drawAlignChart(data) {
 			var lengthScale = d3.scale.linear()
 				.domain([0, data.sectionText.length])
@@ -337,33 +353,123 @@
 			var timeScale = d3.scale.linear()
 				.domain([1230940800, 1294012800])
 				.range([0, alignChartWidth]);
-				
-			comp.append("rect")
-				.attr("x", 10)
-				.attr("y", 10)
+			
+			var minStart = data.sectionText.length;
+			var maxEnd = -1;
+			for (var i = 0; i < data.matches.length; i++) {
+				minStart = Math.min(data.matches[i].docAstart, minStart);
+				maxEnd = Math.max(data.matches[i].docAend, maxEnd);
+			}
+			minStart = Math.max(minStart - 10, 0);
+			maxEnd = Math.min(maxEnd + 10, data.sectionText.length);
+			
+			var adjustedLengthScale = d3.scale.linear()
+				.domain([minStart, maxEnd])
+				.range([0, alignChartHeight]);
+			
+			var chart = comp.append("g")
+				.attr("id", "alignChart")
+				.attr("transform", "translate(" + alignChartPadding + "," + alignChartPadding + ")");
+			
+			chart.append("rect")
+				.attr("x", 0)
+				.attr("y", 0)
 				.attr("height", alignChartHeight)
 				.attr("width", 2)
-				.attr("fill", "black")
+				.attr("fill", "black");
 			
-			comp.append("rect")
-				.attr("d", "M10," + (alignChartHeight + 10) + " L" + (alignChartHeight + 10) + "," + (alignChartHeight + 10))
-				.attr("x", 10)
-				.attr("y", alignChartHeight + 10)
+			chart.append("rect")
+				//.attr("d", "M0," + alignChartHeight + " L" + alignChartHeight + "," + alignChartHeight)
+				.attr("x", 0)
+				.attr("y", alignChartHeight)
 				.attr("height", 2)
 				.attr("width", alignChartWidth)
-				.attr("fill", "black")
+				.attr("fill", "black");
 		
-			comp.selectAll("alignments")
+			var markWidth = 4;
+		
+			chart.selectAll("alignments")
 				.data(data.matches)
 				.enter()
 					.append("rect")
 					.attr("class", "alignments")
-					.attr("x", function(d) { return timeScale(d.IntrDate) + 10 - 2; })
-					.attr("y", function(d) { return 10 + alignChartHeight - lengthScale(parseInt(d.docAend)); })
-					.attr("width", 4)
+					//.attr("d", function(d) { return "M" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - lengthScale(parseInt(d.docAend))) + "L" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - lengthScale(parseInt(d.docAstart)))})
+					//.attr("stroke-width", 4)
+					.attr("x", function(d) { return timeScale(d.IntrDate) - markWidth/2 + 4; })
+					.attr("y", function(d) { return alignChartHeight - lengthScale(parseInt(d.docAend)); })
 					.attr("height", function(d) { return lengthScale(parseInt(d.docAend)) - lengthScale(parseInt(d.docAstart));})
+					.attr("width", markWidth)
+					.attr("stroke", "black")
+					.attr("stroke-width", 0)
+					.attr("opacity", .5)
 					.attr("fill", function(d) { if (d.Party == 100) { return democraticColor; } else { return republicanColor; }})
+					.on("mouseover", function(d,i) { 
+						d3.select(this)
+							.attr("stroke-width", 2)
+							.attr("fill", "yellow");
+					})
+					.on("mouseout", function(d,i) { 
+						d3.select(this)
+							.attr("stroke-width", 0)
+							.attr("fill", function() { if (d.Party == 100) { return democraticColor; } else { return republicanColor; }});
+					})
+					.on("click", function(d,i) { 
+						console.log("here is where the function to highlight text should be called");
+					})
+					.transition()
+						.delay(2*transTime)
+						.duration(transTime)
+						//.attr("stroke-width", 2*markWidth)
+						//.attr("d", function(d) { return "M" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - adjustedLengthScale(parseInt(d.docAend))) + "L" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - adjustedLengthScale(parseInt(d.docAstart)))})
+						.attr("y", function(d) { return alignChartHeight - adjustedLengthScale(parseInt(d.docAend)); })
+						.attr("height", function(d) { return adjustedLengthScale(parseInt(d.docAend)) - adjustedLengthScale(parseInt(d.docAstart));})
+						.attr("width", 2*markWidth)
+			
+			var textHeight = 12;
+			
+			//If the min range is above zero, show dotted line
+			if (minStart > 0) {
+				chart.append("path")
+					.attr("d", "M0," + (alignChartHeight - lengthScale(minStart)) + " L" + alignChartWidth + "," + (alignChartHeight - lengthScale(minStart)))
 					.attr("stroke-width", 1)
+					.attr("stroke", "black")
+					.attr("stroke-dasharray", "10,10")
+					.transition()
+						.delay(2*transTime)
+						.duration(transTime)
+						.attr("d", "M0," + (alignChartHeight - adjustedLengthScale(minStart)) + " L" + alignChartWidth + "," + (alignChartHeight - adjustedLengthScale(minStart)));
+						
+				chart.append("text")
+					.attr("x", alignChartWidth + 5)
+					.attr("y", alignChartHeight - lengthScale(minStart) + textHeight/2)
+					.text(Math.round(minStart/data.sectionText.length * 100) + "%")
+					.transition()
+						.delay(2*transTime)
+						.duration(transTime)
+						.attr("y", alignChartHeight - adjustedLengthScale(minStart) + textHeight/2);
+			}
+			
+			if (maxEnd < data.sectionText.length) {
+				chart.append("path")
+					.attr("d", "M0," + (alignChartHeight - lengthScale(maxEnd)) + " L" + alignChartWidth + "," + (alignChartHeight - lengthScale(maxEnd)))
+					.attr("stroke-width", 2)
+					.attr("stroke", "black")
+					.attr("stroke-dasharray", "10,10")
+					.transition()
+						.delay(2*transTime)
+						.duration(transTime)
+						.attr("d", "M0," + (alignChartHeight - adjustedLengthScale(maxEnd)) + " L" + alignChartWidth + "," + (alignChartHeight - adjustedLengthScale(maxEnd)));
+						
+				chart.append("text")
+					.attr("x", alignChartWidth + 5)
+					.attr("y", alignChartHeight - lengthScale(maxEnd) + textHeight/2)
+					.text(Math.round(maxEnd/data.sectionText.length * 100) + "%")
+					.transition()
+						.delay(2*transTime)
+						.duration(transTime)
+						.attr("y", alignChartHeight - adjustedLengthScale(maxEnd) + textHeight/2);
+			}
+			
 		}
 	}
 
