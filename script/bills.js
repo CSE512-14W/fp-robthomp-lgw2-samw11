@@ -4,7 +4,8 @@
     var height = 720,
 		width = 900;
 		margin = 20
-		titleHight = 50;
+		titleHight = 70
+		bodyMargin = 6;
 
 	// color 
 	var layerOneBackgroundColor = d3.rgb(200,200,200),
@@ -26,7 +27,7 @@
 		firstLayerWidth = width / 5,
 		firstLayerHeight = 2 * height / 3
 		numRects = Math.floor(firstLayerWidth / rectSize_1),
-		startHeight = margin,
+		startHeight = 0,
 		heightSoFar = 0,
 		smallFont = 0,
 		fontSize = 50;
@@ -36,6 +37,7 @@
 		secondLayerHeight = height,
 		rectSize_2 = secondLayerWidth * 0.9,
 		boundary = secondLayerWidth * 0.1;
+		xPos = 0;
 
 	// third layer variables
 	var thirdLayerWidth = 3*width / 5,
@@ -50,15 +52,6 @@
  	d3.select("body").insert("svg:svg")
 		   	.attr("width", width)
 	    	.attr("height", height);
-	  
-	// clip the rect on the second layer so that rects won't go too high
-	var clip = d3.select("svg").append("defs:clipPath")
-					.attr("id", "clip")
-					.append("rect")
-					.attr("x", boundary + 2*margin + firstLayerWidth)
-					.attr("y", margin)
-					.attr("width", rectSize_2)
-					.attr("height", height);
 
 	var title = d3.select("svg").append("g")
 					.append("text")
@@ -73,12 +66,19 @@
 				.attr("id", "firstLayout")
 				.attr("transform", "translate(0," + titleHight + ")");
 
-	var sec = d3.select("svg")
-				.append("g")
-				.attr("id", "secondLayout")
-				.attr("clip-path", "url(#clip)")
-				.attr("transform", "translate(0," + titleHight + ")");
-	
+	var sec = d3.select("body")
+					.append("div")
+					.attr("id", "secLayerDiv")
+					.style({
+						"position": "absolute", 
+						"top": (titleHight + bodyMargin) + "px", 
+						"left": (boundary + 2*margin + firstLayerWidth) + "px",
+						"height": height + "px",
+						"width": (secondLayerWidth + margin) + "px",
+						"overflow": "scroll"})
+					.append("svg:svg")
+					.attr("width", secondLayerWidth);
+
 	var comp = d3.select("svg")
 				.append("g")
 				.attr("id", "thirdLayout")
@@ -88,11 +88,13 @@
 					.append("div")
 					.style({
 						"position": "absolute", 
-						"top": titleHight + thirdLayerHeight, 
-						"left": firstLayerWidth + secondLayerWidth + 50,
-						"height": height - thirdLayerHeight,
-						"width": thirdLayerHeight});
+						"top": (titleHight + thirdLayerHeight) + "px", 
+						"left": (firstLayerWidth + secondLayerWidth + 50) + "px",
+						"height": (height - thirdLayerHeight) + "px",
+						"width": thirdLayerHeight + "px",
+						"overflow": "scroll"});
 	
+	//TODO do we need this?
 	d3.select("svg")
 		.style({
 			"position": "absolute", 
@@ -115,14 +117,16 @@
 						}
 					});
 					// start drawing the visualization
-		 			start();
+		 			controlFlow_1();
 				});
 
-		function start(){
+		function controlFlow_1(){
 			sortData(republicData);
 			sortData(democratData);
 			// we don't care about the no match data for now
 			drawRect_1();
+			// direct to second layer
+			toRepublicanSecLayer();
 		}
 
 		// sort data by match number and than by section id
@@ -198,15 +202,11 @@
 	}
 	
 	function secondLayer(data, party){
-		// clean up data first
-		sec.selectAll(".rectSecond").remove();
-		sec.selectAll(".textGroup").remove();	
-		sec.select("#secondbackground").remove();	
-
+			
+		
 		var color,
 			Id,
-			totalHeight = 0
-			visableHeight = height - titleHight;
+			totalHeight = 0;
 
 		if (party === "R"){
 			color = republicanColor;
@@ -215,25 +215,21 @@
 			color = democraticColor;
 			Id = "#democratId";
 		}
-		
-		var scroll = d3.behavior.zoom()
-    					.on("zoom", scrolled);
+
+		function controlFlow_2(){
+			// cleanup first
+			cleanSecondLayer();
+			cleanThirdLayer();
+			drawRect_2();
+			//console.log(totalHeight);
+			sec.attr("height", totalHeight);
+			scrollUp();
+			toThirdLayer(data[0]);
+		}
 
     	function drawRect_2(){
-    		var xPos = boundary + 2*margin + firstLayerWidth + rectSize_2/2;
-	    	// background rect for the second layer
-	    	sec.append("g:rect")
-	    		.attr("id", "secondbackground")
-	    		.attr("x", boundary + 2*margin + firstLayerWidth)
-	    		.attr("y", margin)
-	    		.attr("width", rectSize_2)
-	    		.attr("height", visableHeight)
-	    		.attr("fill", "white")
-	    		.style("opacity", 0)
-	    		.call(scroll)
-	    		.on("dblclick.zoom", null);
 
-			sec.selectAll("rectSecond")
+			sec.append("g").selectAll("rectSecond")
 				.data(data)
 				.enter()
 				.append("g:rect")
@@ -243,29 +239,29 @@
 				.attr("height", 1)
 				// .attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
 				// .attr("y", function(d, i) { return startHeight + Math.floor(i/numRects) *rectSize_1; })
-				.attr("x", xPos)
-				.attr("y", function(d, i) { return rectSize_2/2 + margin + i*(rectSize_2+margin); })
+				.attr("x", rectSize_2/2)
+				.attr("y", function(d, i) { return rectSize_2/2 + i*(rectSize_2+margin); })
 				.attr("fill", republicanColor)
 				.attr("stroke", rectBound)
 				.style("opacity", 0.1)
 				.on("click", toThirdLayer)
 				.on("mouseover", showTip)
 				.on("mouseleave", hideTip)
-				.call(scroll)
-				.on("dblclick.zoom", null)
+				// .call(scroll)
+				// .on("dblclick.zoom", null)
 				.transition()
 				.duration(transTime)
 				.attr("width", rectSize_2)
 				.attr("height", rectSize_2)
-				.attr("x", function(d, i) { return boundary + 2*margin + firstLayerWidth; })
-				.attr("y", function(d, i) { totalHeight = margin + i*(rectSize_2+margin); return totalHeight;})
+				.attr("x", xPos)//function(d, i) { return boundary + 2*margin + firstLayerWidth; })
+				.attr("y", function(d, i) { totalHeight = i*(rectSize_2+margin); return totalHeight;})
 				.attr("fill", color)
 				.attr("stroke", rectBound)
 				.style("opacity", 1);
 
 			totalHeight += rectSize_2;
 			
-			sec.selectAll("textGroup")
+			sec.append("g").selectAll("textGroup")
 				.data(data)
 				.enter()
 				.append("g:text")
@@ -273,8 +269,8 @@
 				.attr("class", "textGroup")
 				// .attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
 				// .attr("y", function(d, i) { return startHeight + Math.floor(i/numRects) *rectSize_1; })
-				.attr("x", xPos)
-				.attr("y", function(d, i) { return margin + (i)*(rectSize_2+margin) + rectSize_2/2; })
+				.attr("x", rectSize_2/2)
+				.attr("y", function(d, i) { return (i)*(rectSize_2+margin) + rectSize_2/2; })
 				.text(function(d) { return d.matchNum;})
 				.attr("font-size", smallFont)
 				.attr("text-anchor", "middle")
@@ -282,28 +278,24 @@
 				.on("click", toThirdLayer)
 				.on("mouseover", showTip)
 				.on("mouseleave", hideTip)
-				.call(scroll)
-				.on("dblclick.zoom", null)
+				// .call(scroll)
+				// .on("dblclick.zoom", null)
 				.transition()
 				.duration(transTime)
-				.attr("x", function(d, i) { return (rectSize_2/2) + boundary + 2*margin + firstLayerWidth; })
-				.attr("y", function(d, i) { return margin + (i)*(rectSize_2+margin) + 2*rectSize_2/3; })
+				.attr("x", rectSize_2/2)//function(d, i) { return (rectSize_2/2) + boundary + 2*margin + firstLayerWidth; })
+				.attr("y", function(d, i) { return (i)*(rectSize_2+margin) + 2*rectSize_2/3; })
 				.attr("font-size", fontSize)
 				.style("opacity", 1);	
 
-    		// formula: (height/2)x - (height/2) = y (y = totalHeight-hight)
-    		scroll.scaleExtent([1, (2*totalHeight/visableHeight)-1])
-    			.center([(rectSize_2/2) + boundary + 2*margin + firstLayerWidth, visableHeight/2]);
+
     	}
 
-		function scrolled(){
-			// console.log(d3.event.translate[1]);
-			sec.selectAll(".rectSecond")
-				.attr("transform", "translate(0," + d3.event.translate[1] + ")");
-
-			sec.selectAll(".textGroup")
-				.attr("transform", "translate(0," + d3.event.translate[1] + ")");
-		}
+    	function scrollUp(){
+    		var container = document.getElementById("secLayerDiv");
+    		var rowToScrollTo = document.getElementById("rect2Id"+0);
+    		console.log(container, rowToScrollTo);
+    		container.scrollTop = rowToScrollTo.offsetTop;
+    	}
 
 		function showTip(d, i){
 			svg.select(Id+i)
@@ -323,16 +315,15 @@
 		function toThirdLayer(d){
 			console.log("sec id: " + d.secID);
 			thirdLayer(d.secID);
-			
-				
 		}
 
-		drawRect_2();
+		controlFlow_2();
 	}
 
 	function thirdLayer(secID){
-		comp.select("#alignChart").remove();
-		textDiv.select("pre").remove();
+		// comp.select("#alignChart").remove();
+		// textDiv.select("pre").remove();
+		cleanThirdLayer();
 		
 		$.getJSON( "data/data.php", { section: secID} )
 			.done(function( data ) {
@@ -340,7 +331,7 @@
 				drawAlignChart(data);
 				textDiv.append("pre")
 					.style("width", thirdLayerWidth)
-					.style({"position": "absolute", "top": titleHight + thirdLayerHeight + "px", "left": firstLayerWidth + secondLayerWidth + 50 + "px"})
+					//.style({"position": "absolute", "top": titleHight + thirdLayerHeight + "px", "left": firstLayerWidth + secondLayerWidth + 50 + "px"})
 					.html("<span style='background-color: red'>if this is highlighted, this method works</span>" + data.sectionText)
 			});
 		
@@ -473,6 +464,15 @@
 		}
 	}
 
+	function cleanSecondLayer(){
+		sec.selectAll(".rectSecond").remove();
+		sec.selectAll(".textGroup").remove();
+	}
+
+	function cleanThirdLayer(){
+		comp.select("#alignChart").remove();
+		textDiv.select("pre").remove();
+	}
 
 	firstLayer();
 })();
