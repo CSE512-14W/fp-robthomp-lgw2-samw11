@@ -94,6 +94,8 @@ if (!isset($_GET["section"])) {
 			$arr["matchingBills"] = 1;
 			$arr["minDate"] = strtotime($row["IntrDate"]);
 			$arr["party"] = $row["Party"];
+			$arr["200"] = 0;
+			$arr["100"] = 0;
 			$sections[$row["secID"]] = $arr;
 		} else {
 			$sections[$row["secID"]]["matchingBills"]++;
@@ -102,26 +104,36 @@ if (!isset($_GET["section"])) {
 				$sections[$row["secID"]]["party"] = $row["Party"];
 			}
 		}
+		if ($row["Party"] == "100" or $row["Party"] == "200") {
+			$sections[$row["secID"]][$row["Party"]]++;
+		}
 	}
 
+	$query = "SELECT sec_id as secID FROM `bills_sections` WHERE bill_ver_id = " . $billVersionID . " AND Bill_id = " . $billID;
+	$result = $link->query($query);
+	while($row = mysqli_fetch_array($result)) {
+		if (!array_key_exists($row["secID"], $sections)) {
+			$arr = array();
+			$arr["secID"] = $row["secID"];
+			$arr["matchingBills"] = 0;
+			$arr["minDate"] = 0;
+			$arr["party"] = 0;
+			$arr["200"] = 0;
+			$arr["100"] = 0;
+			$sections[$row["secID"]] = $arr;
+		}
+	}
+	
 	#convert the dictionary to a numerical array
 	foreach ($sections as $section) {
 		$out[] = $section;
 	}
 
-	$output = array();
-	$output["sections"] = $out;
-
-	$query = "SELECT COUNT(*) as tot FROM `bills_sections` WHERE bill_ver_id = " . $billVersionID . " AND Bill_id = " . $billID;
-	$result = $link->query($query);
-	$row = mysqli_fetch_array($result);
-	$output["totSections"] = $row["tot"];
-
-	//print(json_encode($output));
+	//print(json_encode($out));
 	
 	#if the query was faster you could use it to dynamically request data and send it to the client
 	#but as things are the query takes about 30mins and so the data must be saved to file for later
-	file_put_contents($outFileName, json_encode($output));
+	file_put_contents($outFileName, json_encode($out));
 } else {
 	$query = "(
 		SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docB, comp.textA, comp.textB, comp.docAstart, comp.docAend, comp.docBstart, comp.docBend, comp.differencesA, comp.differencesB, comp.compLabel, bills.IntrDate, bills.Party, bills.URL

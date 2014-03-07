@@ -107,7 +107,7 @@
 		 // Load the data
 		d3.json("./data/layer1.json",
 				function(d) {
-					var data = d["sections"].map(function(d) {
+					var data = d.map(function(d) {
 						if (d.party == 100){
 							// republican
 							republicData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
