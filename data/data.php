@@ -10,6 +10,8 @@ If the script is passed a section parameter it will return all of the comparison
 include that section
 */
 
+#return total number of sections for Sam
+
 #the id of the base bill, only sections from this bill are aggregated, comparisons against
 #this id are ignored (the same bill being compared to different versions of itself)
 $billID = 446419;
@@ -29,7 +31,7 @@ $charMatchLimit = 200;
 $propLimit = 0.7;
 
 #the name of the file this script will output
-#$outFileName = "layer1.json";
+$outFileName = "layer1.json";
 
 $link = mysqli_connect("master.cmu4mm2fobzj.us-west-2.rds.amazonaws.com","habbal","Dp6wNcah47awWWbL","cbp_main",3306) or die("Error " . mysqli_error($link));
 
@@ -107,11 +109,19 @@ if (!isset($_GET["section"])) {
 		$out[] = $section;
 	}
 
-	print(json_encode($out));
+	$output = array();
+	$output["sections"] = $out;
+
+	$query = "SELECT COUNT(*) as tot FROM `bills_sections` WHERE bill_ver_id = " . $billVersionID . " AND Bill_id = " . $billID;
+	$result = $link->query($query);
+	$row = mysqli_fetch_array($result);
+	$output["totSections"] = $row["tot"];
+
+	//print(json_encode($output));
 	
 	#if the query was faster you could use it to dynamically request data and send it to the client
 	#but as things are the query takes about 30mins and so the data must be saved to file for later
-	//file_put_contents($outFileName, json_encode($out));
+	file_put_contents($outFileName, json_encode($output));
 } else {
 	$query = "(
 		SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docB, comp.textA, comp.textB, comp.docAstart, comp.docAend, comp.docBstart, comp.docBend, comp.differencesA, comp.differencesB, comp.compLabel, bills.IntrDate, bills.Party, bills.URL

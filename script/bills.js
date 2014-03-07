@@ -11,7 +11,8 @@
 	var layerOneBackgroundColor = d3.rgb(200,200,200),
 		republicanColor = "red",
 		democraticColor = "blue",
-		noMatchColor = "grey"
+		independentColor = "green",
+		noMatchColor = "grey",
 		rectBound = "black",
 		layerTwoBackgroundColor = d3.rgb(200,200,200)
 		highlight = "white",
@@ -49,7 +50,7 @@
 	// transition time
 	var transTime = 1000;
 
- 	d3.select("body").insert("svg:svg")
+	d3.select("body").insert("svg:svg")
 		   	.attr("width", width)
 	    	.attr("height", height);
 
@@ -106,7 +107,7 @@
 		 // Load the data
 		d3.json("./data/layer1.json",
 				function(d) {
-					var data = d.map(function(d) {
+					var data = d["sections"].map(function(d) {
 						if (d.party == 100){
 							// republican
 							republicData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
@@ -345,6 +346,12 @@
 				.domain([1230940800, 1294012800])
 				.range([0, alignChartWidth]);
 			
+			var srt = function(obj1, obj2) {
+				return obj1.IntrDate - obj2.IntrDate;
+			}
+			
+			data.matches.sort(srt);
+			
 			var minStart = data.sectionText.length;
 			var maxEnd = -1;
 			for (var i = 0; i < data.matches.length; i++) {
@@ -369,15 +376,17 @@
 				.attr("width", 2)
 				.attr("fill", "black");
 			
-			chart.append("rect")
+			/*chart.append("rect")
 				//.attr("d", "M0," + alignChartHeight + " L" + alignChartHeight + "," + alignChartHeight)
 				.attr("x", 0)
 				.attr("y", alignChartHeight)
 				.attr("height", 2)
 				.attr("width", alignChartWidth)
-				.attr("fill", "black");
+				.attr("fill", "black");*/
 		
-			var markWidth = 4;
+			var markMaxWidth = 10;
+			var markMargin = 8;
+			var markWidth = Math.min(markMaxWidth, (alignChartWidth - markMargin)/data.matches.length - markMargin);
 		
 			chart.selectAll("alignments")
 				.data(data.matches)
@@ -386,14 +395,15 @@
 					.attr("class", "alignments")
 					//.attr("d", function(d) { return "M" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - lengthScale(parseInt(d.docAend))) + "L" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - lengthScale(parseInt(d.docAstart)))})
 					//.attr("stroke-width", 4)
-					.attr("x", function(d) { return timeScale(d.IntrDate) - markWidth/2 + 4; })
+					//.attr("x", function(d) { return timeScale(d.IntrDate) - markWidth/2 + 4; })
+					.attr("x", function(d, i) { return (alignChartWidth - (markWidth + markMargin)*data.matches.length)/2 + i*(markWidth + markMargin) + markMargin})
 					.attr("y", function(d) { return alignChartHeight - lengthScale(parseInt(d.docAend)); })
 					.attr("height", function(d) { return lengthScale(parseInt(d.docAend)) - lengthScale(parseInt(d.docAstart));})
 					.attr("width", markWidth)
 					.attr("stroke", "black")
-					.attr("stroke-width", 0)
-					.attr("opacity", .5)
-					.attr("fill", function(d) { if (d.Party == 100) { return democraticColor; } else { return republicanColor; }})
+					.attr("stroke-width", 1)
+					//.attr("opacity", .5)
+					.attr("fill", function(d) { return partyColor(d.Party); })
 					.on("mouseover", function(d,i) { 
 						d3.select(this)
 							.attr("stroke-width", 2)
@@ -401,8 +411,8 @@
 					})
 					.on("mouseout", function(d,i) { 
 						d3.select(this)
-							.attr("stroke-width", 0)
-							.attr("fill", function() { if (d.Party == 100) { return democraticColor; } else { return republicanColor; }});
+							.attr("stroke-width", 1)
+							.attr("fill", function() { return partyColor(d.Party); });
 					})
 					.on("click", function(d,i) { 
 						console.log("here is where the function to highlight text should be called");
@@ -414,17 +424,69 @@
 						//.attr("d", function(d) { return "M" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - adjustedLengthScale(parseInt(d.docAend))) + "L" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - adjustedLengthScale(parseInt(d.docAstart)))})
 						.attr("y", function(d) { return alignChartHeight - adjustedLengthScale(parseInt(d.docAend)); })
 						.attr("height", function(d) { return adjustedLengthScale(parseInt(d.docAend)) - adjustedLengthScale(parseInt(d.docAstart));})
-						.attr("width", 2*markWidth)
-			
+						//.attr("width", 2*markWidth)
 			var textHeight = 12;
+			var curQ = -1;
+			var curYear = -1;
+			var lastBar = 0;
+			for (var i = 0; i < data.matches.length; i++) {
+				var date = new Date(data.matches[i].IntrDate * 1000);
+				var newQ = Math.ceil((date.getMonth() + .1)/3);
+				if (newQ != curQ || date.getYear() != curYear) {
+					var x = ((alignChartWidth - (markWidth + markMargin)*data.matches.length)/2 + i*(markWidth + markMargin) + markMargin/2);
+					chart.append("path")
+						.attr("d", "M" + x + ",0 L" + x + "," + alignChartHeight)
+						.attr("stroke-width", 1)
+						.attr("stroke", "gray");
+					
+					if (i != 0) {
+						chart.append("text")
+							.attr("x", (lastBar + x)/2)
+							.attr("y", alignChartHeight + 8)
+							.attr("text-anchor", "middle")
+							.attr("font-size", 8)
+							.text("Q" + curQ);
+					
+						chart.append("text")
+							.attr("x", (lastBar + x)/2)
+							.attr("y", alignChartHeight + 2*8)
+							.attr("text-anchor", "middle")
+							.attr("font-size", 8)
+							.text((curYear + 1900));
+					}
+					
+					lastBar = x;
+					curQ = newQ;
+					curYear = date.getYear();
+				}
+			}
+			var x = ((alignChartWidth - (markWidth + markMargin)*data.matches.length)/2 + data.matches.length*(markWidth + markMargin) + markMargin/2);
+			chart.append("path")
+				.attr("d", "M" + x + ",0 L" + x + "," + alignChartHeight)
+				.attr("stroke-width", 1)
+				.attr("stroke", "gray");
+			
+			chart.append("text")
+				.attr("x", (lastBar + x)/2)
+				.attr("y", alignChartHeight + 8)
+				.attr("text-anchor", "middle")
+				.attr("font-size", 8)
+				.text("Q" + curQ);
+		
+			chart.append("text")
+				.attr("x", (lastBar + x)/2)
+				.attr("y", alignChartHeight + 2*8)
+				.attr("text-anchor", "middle")
+				.attr("font-size", 8)
+				.text((curYear + 1900));
 			
 			//If the min range is above zero, show dotted line
-			if (minStart > 0) {
+			//if (minStart > 0) {
 				chart.append("path")
 					.attr("d", "M0," + (alignChartHeight - lengthScale(minStart)) + " L" + alignChartWidth + "," + (alignChartHeight - lengthScale(minStart)))
 					.attr("stroke-width", 1)
 					.attr("stroke", "black")
-					.attr("stroke-dasharray", "10,10")
+					//.attr("stroke-dasharray", "10,10")
 					.transition()
 						.delay(2*transTime)
 						.duration(transTime)
@@ -438,14 +500,14 @@
 						.delay(2*transTime)
 						.duration(transTime)
 						.attr("y", alignChartHeight - adjustedLengthScale(minStart) + textHeight/2);
-			}
+			//}
 			
 			if (maxEnd < data.sectionText.length) {
 				chart.append("path")
 					.attr("d", "M0," + (alignChartHeight - lengthScale(maxEnd)) + " L" + alignChartWidth + "," + (alignChartHeight - lengthScale(maxEnd)))
 					.attr("stroke-width", 2)
 					.attr("stroke", "black")
-					.attr("stroke-dasharray", "10,10")
+					//.attr("stroke-dasharray", "10,10")
 					.transition()
 						.delay(2*transTime)
 						.duration(transTime)
@@ -472,6 +534,16 @@
 	function cleanThirdLayer(){
 		comp.select("#alignChart").remove();
 		textDiv.select("pre").remove();
+	}
+
+	function partyColor(party) {
+		if (party == "200") {
+			return republicanColor;
+		} else if (party == "100") {
+			return democraticColor;
+		} else {
+			return independentColor;
+		}
 	}
 
 	firstLayer();
