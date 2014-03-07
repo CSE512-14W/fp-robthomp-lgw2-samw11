@@ -11,7 +11,7 @@
 	var layerOneBackgroundColor = d3.rgb(200,200,200),
 		republicanColor = "red",
 		democraticColor = "blue",
-		independentColor = "green",
+		independentColor = "gray",
 		noMatchColor = "grey",
 		rectBound = "black",
 		layerTwoBackgroundColor = d3.rgb(200,200,200)
@@ -107,7 +107,7 @@
 		 // Load the data
 		d3.json("./data/layer1.json",
 				function(d) {
-					var data = d.map(function(d) {
+					/*var data = d.map(function(d) {
 						if (d.party == 100){
 							// republican
 							republicData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
@@ -118,7 +118,49 @@
 						}
 					});
 					// start drawing the visualization
-		 			controlFlow_1();
+		 			controlFlow_1();*/
+		 			
+		 			d.sort(function(a,b) {
+		 				return a["secID"].localeCompare(b["secID"]);
+		 			})
+		 			
+		 			var rowWidth = 20;
+		 			var rowHeight = 1;//(height - titleHight)/d.length;
+		 			console.log(rowHeight);
+		 			var axisWidth = 1;
+		 			var rowMax = 30;
+		 			
+		 			//the axis
+		 			svg.append("rect")
+		 				.attr("width", axisWidth)
+						.attr("height", rowHeight*d.length)
+						.attr("x", function(d, i) { return margin + rowMax; })
+						.attr("y", 0)
+						.attr("fill", "gray")
+		 			
+		 			svg.selectAll("repRow")
+						.data(d)
+						.enter()
+						.append("rect")
+						.attr("id", function(d, i) { return "repRow" + i; })
+						.attr("class", "repRow")
+						.attr("width", function(d) { return Math.min(d["S200"] + d["HR200"], rowMax); })
+						.attr("height", rowHeight)
+						.attr("x", function(d, i) { return margin + rowMax + axisWidth; })
+						.attr("y", function(d, i) { return i*rowHeight; })
+						.attr("fill", "red")
+						
+					svg.selectAll("demRow")
+						.data(d)
+						.enter()
+						.append("rect")
+						.attr("id", function(d, i) { return "demRow" + i; })
+						.attr("class", "demRow")
+						.attr("width", function(d) { return Math.min(d["S100"] + d["HR100"], rowMax); })
+						.attr("height", rowHeight)
+						.attr("x", function(d, i) { return margin + rowMax - Math.min(d["S100"] + d["HR100"], rowMax); })
+						.attr("y", function(d, i) { return i*rowHeight; })
+						.attr("fill", "blue")
 				});
 
 		function controlFlow_1(){

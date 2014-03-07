@@ -10,7 +10,7 @@ If the script is passed a section parameter it will return all of the comparison
 include that section
 */
 
-#return total number of sections for Sam
+#return breakdown of house/senate and return full matching bill text
 
 #the id of the base bill, only sections from this bill are aggregated, comparisons against
 #this id are ignored (the same bill being compared to different versions of itself)
@@ -38,7 +38,7 @@ $link = mysqli_connect("master.cmu4mm2fobzj.us-west-2.rds.amazonaws.com","habbal
 if (!isset($_GET["section"])) {
 	
 	$query = "(
-		SELECT comp.compID, comp.idA AS secID, bills.IntrDate, bills.Party
+		SELECT comp.compID, comp.idA AS secID, bills.IntrDate, bills.Party, bills.BillType
 			FROM bills_sectcomp AS comp, bills_sections AS sect, bills, bills_sections AS sectb
 			WHERE comp.idB = sect.sec_id
 				AND sect.Bill_id = bills.id
@@ -54,7 +54,7 @@ if (!isset($_GET["section"])) {
 				)
 		)
 		UNION 
-		(SELECT comp.compID, comp.idB AS secID, bills.IntrDate, bills.Party
+		(SELECT comp.compID, comp.idB AS secID, bills.IntrDate, bills.Party, bills.BillType
 			FROM bills_sectcomp AS comp, bills_sections AS sect, bills, bills_sections AS sectb
 			WHERE comp.idA = sect.sec_id
 				AND sect.Bill_id = bills.id
@@ -94,8 +94,10 @@ if (!isset($_GET["section"])) {
 			$arr["matchingBills"] = 1;
 			$arr["minDate"] = strtotime($row["IntrDate"]);
 			$arr["party"] = $row["Party"];
-			$arr["200"] = 0;
-			$arr["100"] = 0;
+			$arr["HR200"] = 0;
+			$arr["S200"] = 0;
+			$arr["HR100"] = 0;
+			$arr["S100"] = 0;
 			$sections[$row["secID"]] = $arr;
 		} else {
 			$sections[$row["secID"]]["matchingBills"]++;
@@ -105,7 +107,7 @@ if (!isset($_GET["section"])) {
 			}
 		}
 		if ($row["Party"] == "100" or $row["Party"] == "200") {
-			$sections[$row["secID"]][$row["Party"]]++;
+			$sections[$row["secID"]][$row["BillType"] . $row["Party"]]++;
 		}
 	}
 
@@ -118,8 +120,10 @@ if (!isset($_GET["section"])) {
 			$arr["matchingBills"] = 0;
 			$arr["minDate"] = 0;
 			$arr["party"] = 0;
-			$arr["200"] = 0;
-			$arr["100"] = 0;
+			$arr["HR200"] = 0;
+			$arr["S200"] = 0;
+			$arr["HR100"] = 0;
+			$arr["S100"] = 0;
 			$sections[$row["secID"]] = $arr;
 		}
 	}
@@ -136,11 +140,12 @@ if (!isset($_GET["section"])) {
 	file_put_contents($outFileName, json_encode($out));
 } else {
 	$query = "(
-		SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docB, comp.textA, comp.textB, comp.docAstart, comp.docAend, comp.docBstart, comp.docBend, comp.differencesA, comp.differencesB, comp.compLabel, bills.IntrDate, bills.Party, bills.URL
-			FROM bills_sectcomp as comp, bills_sections as sec, bills 
+		SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docB, comp.textA, comp.textB, comp.docAstart, comp.docAend, comp.docBstart, comp.docBend, comp.differencesA, comp.differencesB, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, tex.text as BillText
+			FROM bills_sectcomp as comp, bills_sections as sec, bills, bills_secttext as tex
 			WHERE comp.idA = " . $_GET["section"] . " 
 				AND sec.Bill_id = bills.id 
 				AND comp.idB = sec.sec_id 
+				AND comp.idB = tex.sec_id
 				AND NOT sec.Bill_id = " . $billID . " 
 				AND comp.SWalign > " . $SWalignLimit . "
 				AND comp.charMatch > " . $charMatchLimit . "
@@ -150,11 +155,12 @@ if (!isset($_GET["section"])) {
 				)
 		) 
 		UNION 
-		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docA as docB, comp.textA as textB, comp.textB as textA, comp.docAstart as docBstart, comp.docAend as docBend, comp.docBstart as docAstart, comp.docBend as docAend, comp.differencesA as differencesB, comp.differencesB as differencesA, comp.compLabel, bills.IntrDate, bills.Party, bills.URL 
-			FROM bills_sectcomp as comp, bills_sections as sec, bills 
+		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docA as docB, comp.textA as textB, comp.textB as textA, comp.docAstart as docBstart, comp.docAend as docBend, comp.docBstart as docAstart, comp.docBend as docAend, comp.differencesA as differencesB, comp.differencesB as differencesA, comp.compLabel, bills.IntrDate, bills.Party, bills.URL,  tex.text as BillText 
+			FROM bills_sectcomp as comp, bills_sections as sec, bills, bills_secttext as tex
 			WHERE comp.idB = " . $_GET["section"] . " 
 				AND sec.Bill_id = bills.id 
 				AND comp.idA = sec.sec_id 
+				AND comp.idA = tex.sec_id
 				AND NOT sec.Bill_id = " . $billID . "
 				AND comp.SWalign > " . $SWalignLimit . "
 				AND comp.charMatch > " . $charMatchLimit . "
@@ -198,6 +204,7 @@ if (!isset($_GET["section"])) {
 		$arr["IntrDate"] = strtotime($row["IntrDate"]);
 		$arr["Party"] = $row["Party"];
 		$arr["URL"] = $row["URL"];
+		$arr["matchText"] = $row["BillText"];
 		$rows[] = $arr;
 	}
 
