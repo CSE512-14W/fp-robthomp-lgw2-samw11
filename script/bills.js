@@ -4,7 +4,7 @@
     var height = 720,
 		width = 900;
 		margin = 20
-		titleHight = 70
+		titleHeight = 70
 		bodyMargin = 6;
 
 	// color 
@@ -13,6 +13,7 @@
 		democraticColor = "blue",
 		independentColor = "gray",
 		noMatchColor = "grey",
+		firstLayerCentralAxis = "grey",
 		rectBound = "black",
 		layerTwoBackgroundColor = d3.rgb(200,200,200)
 		highlight = "white",
@@ -21,24 +22,45 @@
 	// data in json format		
 	var republicData = [],
 		democratData = [],
-		noMatchData = [];
+		noMatchData = [],
+		sectionData = [];
+
+	// default sort by secID 
+	var sort = "secID";
+
+	// the top title layer variables
+	var fontSize = titleHeight - 20;
 
 	// first layer variables
-	var rectSize_1 = 10,
-		firstLayerWidth = width / 5,
-		firstLayerHeight = 2 * height / 3
-		numRects = Math.floor(firstLayerWidth / rectSize_1),
-		startHeight = 0,
-		heightSoFar = 0,
-		smallFont = 0,
-		fontSize = 50;
+	var rowMax = width / 30,	// the length of each row
+		rowHeight,
+		axisWidth = 1,		// the central axis width 
+		firstLayerWidth = 2 * rowMax + axisWidth,
+		firstLayerHeight = height - titleHeight;
+
+		// rectSize_1 = 10,
+		// firstLayerWidth = width / 5,
+		// firstLayerHeight = 2 * height / 3
+		// numRects = Math.floor(firstLayerWidth / rectSize_1),
+		// startHeight = 0,
+		// heightSoFar = 0,
+		// smallFont = 0,
+		// fontSize = 50;
+
+	// the window layer between first and second layer
+	var windowStart1 = d3.scale.linear(),
+		windowSize1 = 0,
+		strokeWidth = 2;
 
 	// second layer variables
 	var secondLayerWidth = width / 10,
-		secondLayerHeight = height,
-		rectSize_2 = secondLayerWidth * 0.9,
-		boundary = secondLayerWidth * 0.1;
-		xPos = 0;
+		secondLayerHeight = height - titleHeight,
+		rectWidth_2 = secondLayerWidth * 0.9,
+		rectHeight_2 = rectWidth_2 / 2;
+		boundary = secondLayerWidth * 0.4;
+		xPos = 0,
+		smallFont = 0;
+
 
 	// third layer variables
 	var thirdLayerWidth = 3*width / 5,
@@ -47,12 +69,15 @@
 		alignChartHeight = height / 3,
 		alignChartPadding = 10,
 		billInfoDivWidth = 200,
-		textDivWidth = thirdLayerWidth;
+		textDivWidth = thirdLayerWidth
+		xPosition = firstLayerWidth + secondLayerWidth + boundary*2 + 2*margin;
 
 	// transition time
 	var transTime = 1000;
 
-	d3.select("body").insert("svg:svg")
+	d3.select("body")
+			// .style({"overflow": "hidden !important"})
+			.insert("svg:svg")
 		   	.attr("width", width)
 	    	.attr("height", height);
 
@@ -67,32 +92,53 @@
 	var svg = d3.select("svg")
 				.append("g")
 				.attr("id", "firstLayout")
-				.attr("transform", "translate(0," + titleHight + ")");
+				.attr("width", firstLayerWidth)
+				.attr("height", firstLayerHeight)
+				.attr("transform", "translate(0," + titleHeight + ")");
 
 	var sec = d3.select("body")
 					.append("div")
 					.attr("id", "secLayerDiv")
 					.style({
 						"position": "absolute", 
-						"top": (titleHight + bodyMargin) + "px", 
+						"top": (titleHeight + bodyMargin) + "px", 
 						"left": (boundary + 2*margin + firstLayerWidth) + "px",
-						"height": height + "px",
+						"height": secondLayerHeight + "px",
 						"width": (secondLayerWidth + margin) + "px",
 						"overflow": "scroll"})
+					// .attr("onscroll", "scrollPos();")
+					// .append("div")
+					// .attr("id", "secLayerDiv")
+					// .style({
+					// 	"position": "absolute", 
+					// 	"top": 0 + "px",//(titleHeight + bodyMargin) + "px", 
+					// 	"left": 0 + "px",//(boundary + 2*margin + firstLayerWidth) + "px",
+					// 	// "height": height + "px",
+					// 	"width": (secondLayerWidth + margin) + "px",
+					// 	"overflow": "scroll"})
 					.append("svg:svg")
 					.attr("width", secondLayerWidth);
+					// .style({"display": "block"})
+					// .style({"vertical-align":"top"});
+
+	var win1 = d3.select("svg")
+					.append("g")
+					.attr("id", "between1And2Layer")
+					.attr("width", boundary)
+					.attr("height", secondLayerHeight)
+					.attr("transform", "translate(" + firstLayerWidth + "," + titleHeight + ")");
 
 	var comp = d3.select("svg")
 				.append("g")
 				.attr("id", "thirdLayout")
-				.attr("transform", "translate(" + (firstLayerWidth + secondLayerWidth + 50) + "," + titleHight + ")");
+				.attr("transform", "translate(" + xPosition + "," + titleHeight + ")");
 
 	var textDiv = d3.select("body")
 					.append("div")
 					.style({
 						"position": "absolute", 
-						"top": (titleHight + thirdLayerHeight) + "px", 
-						"left": (firstLayerWidth + secondLayerWidth + 50) + "px",
+						"top": (titleHeight + thirdLayerHeight) + "px", 
+						"left": xPosition + "px",
 						"height": (height - thirdLayerHeight) + "px",
 						"width": textDivWidth + "px",
 						"overflow": "scroll"});
@@ -101,8 +147,8 @@
 					.append("div")
 					.style({
 						"position": "absolute", 
-						"top": (titleHight + thirdLayerHeight) + "px", 
-						"left": (firstLayerWidth + secondLayerWidth + 50 + textDivWidth) + "px",
+						"top": (titleHeight + thirdLayerHeight) + "px", 
+						"left": (xPosition + textDivWidth) + "px",
 						"height": (height - thirdLayerHeight) + "px",
 						"width": textDivWidth + "px",
 						"overflow": "scroll"});
@@ -111,8 +157,8 @@
 						.append("div")
 						.style({
 							"position": "absolute", 
-							"top": titleHight + "px", 
-							"left": (firstLayerWidth + secondLayerWidth + thirdLayerWidth + 60) + "px",
+							"top": titleHeight + "px", 
+							"left": (xPosition + thirdLayerWidth + 60) + "px",
 							"height": height + "px",
 							"width": billInfoDivWidth + "px",
 							"overflow": "scroll"});
@@ -124,242 +170,378 @@
 			"top": 10, 
 			"left": 10});
 
+	// sort data by match number and than by section id
+	function sortData(array, key, asec){
+		sort = key;
+		array.sort(function(a, b) {
+			if (asec) {
+				return a[key] > b[key] ? 1 : ((a[key] < b[key]) ? -1 : 0);
+			} else {
+				return a[key] > b[key] ? -1 : ((a[key] < b[key]) ? 1 : 0);
+			}
+			// // greater matchNum first 
+			// var diff = a["matchNum"] > b["matchNum"] ? -1 : ((a["matchNum"] < b["matchNum"]) ? 1 : 0);
+			// // TODO date?
+			// if (diff == 0){
+			// 	// smaller secId first
+			// 	diff = a["secID"] > b["secID"] ? 1 : ((a["secID"] < b["secID"]) ? -1 : 0);
+			// }
+			// return diff;
+		});
+	}
+
+	function scrollPos(){
+		var div = document.getElementById("secLayerDiv").scrollTop;
+		// move the window
+		var upperLine = d3.select("#upperLineId")
+							.attr("y1", windowStart1(div));
+
+		var lowerLine = d3.select("#lowerLineId")
+						.attr("y1", windowStart1(div) + windowSize1);
+		console.log("scrollpos",div, windowSize1, windowStart1(div) );
+	}
+
 	// Logic of the first layer
 	function firstLayer(){
+
 		 // Load the data
 		d3.json("./data/layer1.json",
 				function(d) {
-					var data = d.map(function(d) {
-						if (d.party == 100){
-							// republican
-							republicData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
-						} else if (d.party == 200) {
-							democratData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
-						} else {
-							noMatchData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
+					sectionData = d.map(function(d) {
+						return {
+							secID : d.secID,
+							matchNum : d.matchingBills,
+							date : new Date(d.minDate*1000),
+							party : d.party,
+							hr200 : d.HR200,
+							s200 : d.S200,
+							hr100 : d.HR100,
+							s100 : d.S100
 						}
+						// if (d.party == 100){
+						// 	// republican
+						// 	republicData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
+						// } else if (d.party == 200) {
+						// 	democratData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
+						// } else {
+						// 	noMatchData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
+						// }
 					});
 					// start drawing the visualization
 		 			controlFlow_1();
 		 			
-		 			d.sort(function(a,b) {
-		 				return a["secID"].localeCompare(b["secID"]);
-		 			})
-		 			
-		 			var rowWidth = 20;
-		 			var rowHeight = 1;//(height - titleHight)/d.length;
-		 			console.log(rowHeight);
-		 			var axisWidth = 1;
-		 			var rowMax = 30;
-		 			
-		 			//the axis
-		 			svg.append("rect")
-		 				.attr("width", axisWidth)
-						.attr("height", rowHeight*d.length)
-						.attr("x", function(d, i) { return margin + rowMax; })
-						.attr("y", 0)
-						.attr("fill", "gray")
-		 			
-		 			svg.selectAll("repRow")
-						.data(d)
-						.enter()
-						.append("rect")
-						.attr("id", function(d, i) { return "repRow" + i; })
-						.attr("class", "repRow")
-						.attr("width", function(d) { return Math.min(d["S200"] + d["HR200"], rowMax); })
-						.attr("height", rowHeight)
-						.attr("x", function(d, i) { return margin + rowMax + axisWidth; })
-						.attr("y", function(d, i) { return i*rowHeight; })
-						.attr("fill", "red")
-						
-					svg.selectAll("demRow")
-						.data(d)
-						.enter()
-						.append("rect")
-						.attr("id", function(d, i) { return "demRow" + i; })
-						.attr("class", "demRow")
-						.attr("width", function(d) { return Math.min(d["S100"] + d["HR100"], rowMax); })
-						.attr("height", rowHeight)
-						.attr("x", function(d, i) { return margin + rowMax - Math.min(d["S100"] + d["HR100"], rowMax); })
-						.attr("y", function(d, i) { return i*rowHeight; })
-						.attr("fill", "blue")
+		 			// d.sort(function(a,b) {
+		 			// 	return a["secID"].localeCompare(b["secID"]);
+		 			// })
 				});
 
 		function controlFlow_1(){
-			sortData(republicData);
-			sortData(democratData);
+			rowHeight = firstLayerHeight/sectionData.length;
+			// console.log(firstLayerHeight, sectionData.length, rowHeight);
+			// sort by secID
+			sortData(sectionData, "secID", "asec");
+			// sortData(sectionData, "matchNum");
+			// sortData(sectionData, "party");
+			// sortData(sectionData, "date");
+			//sortData(democratData);
 			// we don't care about the no match data for now
-			drawRect_1();
+			draw_1(rowHeight);
 			// direct to second layer
-			toRepublicanSecLayer();
+			toSecondLayer();
+			//toRepublicanSecLayer();
 		}
 
-		// sort data by match number and than by section id
-		function sortData(array){
-			array.sort(function(a, b) {
-				// greater matchNum first 
-				var diff = a["matchNum"] > b["matchNum"] ? -1 : ((a["matchNum"] < b["matchNum"]) ? 1 : 0);
-				// TODO date?
-				if (diff == 0){
-					// smaller secId first
-					diff = a["secID"] > b["secID"] ? 1 : ((a["secID"] < b["secID"]) ? -1 : 0);
-				}
-				return diff;
-			});
-		}
+		
 
-		function drawRect_1(){
+		function draw_1(rowHeight){
 
-			svg.selectAll("republican")
-				.data(republicData)
+			//the axis
+ 			svg.append("rect")
+ 				.attr("width", axisWidth)
+				.attr("height", rowHeight * sectionData.length)
+				.attr("x", function(d, i) { return margin + rowMax; })
+				.attr("y", 0)
+				.attr("fill", firstLayerCentralAxis);
+ 			
+ 			svg.selectAll("repRow_1")
+				.data(sectionData)
 				.enter()
 				.append("rect")
-				.attr("id", function(d, i) { return "republicId" + i; })
-				.attr("class", "republician")
-				.attr("width", rectSize_1)
-				.attr("height", rectSize_1)
-				.attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
-				.attr("y", function(d, i) { heightSoFar = startHeight + Math.floor(i/numRects) *rectSize_1; return heightSoFar; })
-				.attr("fill", republicanColor)
-				.attr("stroke", rectBound)
-				.on("click", toRepublicanSecLayer);
-
-			heightSoFar += rectSize_1;
-			startHeight = heightSoFar;
-
-			svg.selectAll("democrat")
-				.data(democratData)
+				.attr("id", function(d, i) { return "repRow_1Id" + i; })
+				.attr("class", "repRow_1")
+				.attr("width", function(d) { return Math.min(d["s200"] + d["hr200"], rowMax); })
+				.attr("height", rowHeight)
+				.attr("x", function(d, i) { return margin + rowMax + axisWidth; })
+				.attr("y", function(d, i) { return i*rowHeight; })
+				.attr("fill", republicanColor);
+				
+			svg.selectAll("demRow_1")
+				.data(sectionData)
 				.enter()
 				.append("rect")
-				.attr("id", function(d, i) { return "democratId" + i; })
-				.attr("class", "democrat")
-				.attr("width", rectSize_1)
-				.attr("height", rectSize_1)
-				.attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
-				.attr("y", function(d, i) { heightSoFar = startHeight + Math.floor(i/numRects) *rectSize_1; return heightSoFar;})
-				.attr("fill", democraticColor)
-				.attr("stroke", rectBound)
-				.on("click", toDemocratSecLayer);
+				.attr("id", function(d, i) { return "demRow_1Id" + i; })
+				.attr("class", "demRow_1")
+				.attr("width", function(d) { return Math.min(d["s100"] + d["hr100"], rowMax); })
+				.attr("height", rowHeight)
+				.attr("x", function(d, i) { return margin + rowMax - Math.min(d["s100"] + d["hr100"], rowMax); })
+				.attr("y", function(d, i) { return i*rowHeight; })
+				.attr("fill", democraticColor);
 
-			heightSoFar += rectSize_1;
+			// TODO need a window rect
 
-			svg.selectAll("noMatch")
-				.data(noMatchData)
-				.enter()
-				.append("rect")
-				.attr("id", function(d, i) { return "noMatchId" + i; })
-				.attr("class", "noMatch")
-				.attr("width", rectSize_1)
-				.attr("height", rectSize_1)
-				.attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
-				.attr("y", function(d, i) { return heightSoFar + Math.floor(i/numRects) *rectSize_1; })
-				.attr("fill", noMatchColor)
-				.attr("stroke", rectBound);
+
+			// svg.selectAll("republican")
+			// 	.data(republicData)
+			// 	.enter()
+			// 	.append("rect")
+			// 	.attr("id", function(d, i) { return "republicId" + i; })
+			// 	.attr("class", "republician")
+			// 	.attr("width", rectSize_1)
+			// 	.attr("height", rectSize_1)
+			// 	.attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
+			// 	.attr("y", function(d, i) { heightSoFar = startHeight + Math.floor(i/numRects) *rectSize_1; return heightSoFar; })
+			// 	.attr("fill", republicanColor)
+			// 	.attr("stroke", rectBound)
+			// 	.on("click", toRepublicanSecLayer);
+
+			// heightSoFar += rectSize_1;
+			// startHeight = heightSoFar;
+
+			// svg.selectAll("democrat")
+			// 	.data(democratData)
+			// 	.enter()
+			// 	.append("rect")
+			// 	.attr("id", function(d, i) { return "democratId" + i; })
+			// 	.attr("class", "democrat")
+			// 	.attr("width", rectSize_1)
+			// 	.attr("height", rectSize_1)
+			// 	.attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
+			// 	.attr("y", function(d, i) { heightSoFar = startHeight + Math.floor(i/numRects) *rectSize_1; return heightSoFar;})
+			// 	.attr("fill", democraticColor)
+			// 	.attr("stroke", rectBound)
+			// 	.on("click", toDemocratSecLayer);
+
+			// heightSoFar += rectSize_1;
+
+			// svg.selectAll("noMatch")
+			// 	.data(noMatchData)
+			// 	.enter()
+			// 	.append("rect")
+			// 	.attr("id", function(d, i) { return "noMatchId" + i; })
+			// 	.attr("class", "noMatch")
+			// 	.attr("width", rectSize_1)
+			// 	.attr("height", rectSize_1)
+			// 	.attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
+			// 	.attr("y", function(d, i) { return heightSoFar + Math.floor(i/numRects) *rectSize_1; })
+			// 	.attr("fill", noMatchColor)
+			// 	.attr("stroke", rectBound);
 		}
 
-		function toRepublicanSecLayer(d, i){
-			secondLayer(republicData, "R");
+		function toSecondLayer(){
+			secondLayer(sectionData);
 		}
+		// function toRepublicanSecLayer(d, i){
+		// 	secondLayer(republicData, "R");
+		// }
 
-		function toDemocratSecLayer(d, i){				
-			secondLayer(democratData, "D");
-		}
+		// function toDemocratSecLayer(d, i){				
+		// 	secondLayer(democratData, "D");
+		// }
 	}
 	
-	function secondLayer(data, party){
+	function secondLayer(data){
 			
-		
-		var color,
-			Id,
-			totalHeight = 0;
+		var totalHeight = 0,
+			axisWidth_2 = axisWidth * 2,
+			// dem and rep bar width
+			scaleWidth = d3.scale.linear()
+							.domain([0, rowMax])
+							.range([0, rectWidth_2/2-axisWidth_2/2]);
+			// x position for rep
+			xPos = d3.scale.linear()
+						.domain([0, rowMax])
+						.range([rectWidth_2/2-axisWidth_2/2, rectWidth_2]);
 
-		if (party === "R"){
-			color = republicanColor;
-			Id = "#republicId";
-		} else {
-			color = democraticColor;
-			Id = "#democratId";
-		}
+		// var container = document.getElementById("secLayerDiv").on("mouseWheel DOMMouseScroll", scrollPos);
+		var container = $("#secLayerDiv").on("mouseWheel DOMMouseScroll", scrollPos);
+    	// var rowToScrollTo = document.getElementById("rect2Id"+0);
+
+  //   	function scroll(e) {
+  //   		var first = d3.select("#rectSecId0");
+  //   		var rowToScrollTo = document.getElementById("rectSecId"+0);
+
+  //   		console.log(container.scrollTop, rowToScrollTo.x, first[0][0].getBBox());	
+  //   	}
+		// if (party === "R"){
+		// 	color = republicanColor;
+		// 	Id = "#demRowId";
+		// } else {
+		// 	color = democraticColor;
+		// 	Id = "#demRowId";
+		// }
 
 		function controlFlow_2(){
 			// cleanup first
 			cleanSecondLayer();
 			cleanThirdLayer();
-			drawRect_2();
+			// calculate the total height
+			var totalHeight = data.length * (rectHeight_2 + margin) - margin;
+			draw_2();
 			//console.log(totalHeight);
 			sec.attr("height", totalHeight);
-			scrollUp();
+			windowSize1 = secondLayerHeight / (rectHeight_2 + margin) * rowHeight;
+			windowStart1.domain([0, totalHeight])
+						.range([0, secondLayerHeight]);
+			// console.log(secondLayerHeight, (rectHeight_2 + margin), rowHeight);
+			windowLayer1();
+			// scrollUp();
 			toThirdLayer(data[0]);
 		}
 
-    	function drawRect_2(){
-
-			sec.append("g").selectAll("rectSecond")
+    	function draw_2(){
+    		// rect boxes
+			sec.append("g").selectAll("rectRow_2")
 				.data(data)
 				.enter()
 				.append("g:rect")
-				.attr("id", function(d, i) { return "rect2Id" + i; })
-				.attr("class", "rectSecond")
+				.attr("id", function(d, i) { return "rectSecId" + i; })
+				.attr("class", "rectRow_2")
 				.attr("width", 1)
 				.attr("height", 1)
 				// .attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
 				// .attr("y", function(d, i) { return startHeight + Math.floor(i/numRects) *rectSize_1; })
-				.attr("x", rectSize_2/2)
-				.attr("y", function(d, i) { return rectSize_2/2 + i*(rectSize_2+margin); })
-				.attr("fill", republicanColor)
+				.attr("x", rectWidth_2/2)
+				.attr("y", function(d, i) { return rectHeight_2/2 + i*(rectHeight_2+margin); })
+				.attr("fill", "white")
 				.attr("stroke", rectBound)
 				.style("opacity", 0.1)
-				.on("click", toThirdLayer)
-				.on("mouseover", showTip)
-				.on("mouseleave", hideTip)
+				// .on("click", toThirdLayer)
+				// .on("mouseover", showTip)
+				// .on("mouseleave", hideTip)
 				// .call(scroll)
 				// .on("dblclick.zoom", null)
 				.transition()
 				.duration(transTime)
-				.attr("width", rectSize_2)
-				.attr("height", rectSize_2)
-				.attr("x", xPos)//function(d, i) { return boundary + 2*margin + firstLayerWidth; })
-				.attr("y", function(d, i) { totalHeight = i*(rectSize_2+margin); return totalHeight;})
-				.attr("fill", color)
+				.attr("width", rectWidth_2)
+				.attr("height", rectHeight_2)
+				.attr("x", 0)//function(d, i) { return boundary + 2*margin + firstLayerWidth; })
+				.attr("y", function(d, i) { return i*(rectHeight_2+margin); })
+				.attr("fill", "white")
 				.attr("stroke", rectBound)
 				.style("opacity", 1);
 
-			totalHeight += rectSize_2;
 			
-			sec.append("g").selectAll("textGroup")
+
+			sec.selectAll("repRow_2")
 				.data(data)
 				.enter()
-				.append("g:text")
-				.attr("id", function(d, i) { return "textId" + i; })
-				.attr("class", "textGroup")
-				// .attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
-				// .attr("y", function(d, i) { return startHeight + Math.floor(i/numRects) *rectSize_1; })
-				.attr("x", rectSize_2/2)
-				.attr("y", function(d, i) { return (i)*(rectSize_2+margin) + rectSize_2/2; })
-				.text(function(d) { return d.matchNum;})
-				.attr("font-size", smallFont)
-				.attr("text-anchor", "middle")
-				.style("opacity", 0.1)
-				.on("click", toThirdLayer)
-				.on("mouseover", showTip)
-				.on("mouseleave", hideTip)
-				// .call(scroll)
-				// .on("dblclick.zoom", null)
+				.append("rect")
+				.attr("id", function(d, i) { return "repRow_2Id" + i; })
+				.attr("class", "repRow_2")
+				.attr("width", 0)
+				.attr("height", 0)
+				.attr("x", rectWidth_2/2)
+				.attr("y", function(d, i) { return rectHeight_2/2 + i*(rectHeight_2+margin); })
 				.transition()
 				.duration(transTime)
-				.attr("x", rectSize_2/2)//function(d, i) { return (rectSize_2/2) + boundary + 2*margin + firstLayerWidth; })
-				.attr("y", function(d, i) { return (i)*(rectSize_2+margin) + 2*rectSize_2/3; })
-				.attr("font-size", fontSize)
-				.style("opacity", 1);	
+				.attr("width", function(d) { return scaleWidth(Math.min(d["s200"] + d["hr200"], rowMax)); })
+				.attr("height", rectHeight_2)
+				.attr("x", function(d, i) { return rectWidth_2 / 2 + axisWidth / 2; })
+				.attr("y", function(d, i) { return i*(rectHeight_2+margin); })
+				.attr("fill", republicanColor);
+				
+			sec.selectAll("demRow_2")
+				.data(data)
+				.enter()
+				.append("rect")
+				.attr("id", function(d, i) { return "demRow_2Id" + i; })
+				.attr("class", "demRow_2")
+				.attr("width", 0)
+				.attr("height", 0)
+				.attr("x", rectWidth_2/2)
+				.attr("y", function(d, i) { return rectHeight_2/2 + i*(rectHeight_2+margin); })
+				.transition()
+				.duration(transTime)
+				.attr("width", function(d) { return scaleWidth(Math.min(d["s100"] + d["hr100"], rowMax)); })
+				.attr("height", rectHeight_2)
+				.attr("x", function(d, i) { return rectWidth_2 / 2 - axisWidth_2 / 2 - scaleWidth(Math.min(d["s100"] + d["hr100"], rowMax)) ; })
+				.attr("y", function(d, i) { return i*(rectHeight_2+margin); })
+				.attr("fill", democraticColor);
 
 
+
+			// center axis
+ 			sec.append("g").selectAll("centralAxis")
+ 				.data(data)
+ 				.enter()
+ 				.append("g:rect")
+ 				.attr("class", "axis_2")
+				.attr("width", 0)
+				.attr("height", 0)
+				.attr("x", rectWidth_2/2)
+				.attr("y", function(d, i) { return rectHeight_2/2 + i*(rectHeight_2+margin); })
+				.attr("fill", firstLayerCentralAxis)
+				.style("opacity", 0.1)
+ 				.transition()
+				.duration(transTime)
+ 				.attr("width", axisWidth_2)
+				.attr("height", rectHeight_2)
+				.attr("x", rectWidth_2 / 2 - axisWidth_2 / 2)
+				.attr("y", function(d, i) { return i*(rectHeight_2+margin); })
+				.attr("fill", firstLayerCentralAxis)
+				.style("opacity", 1);
+			// totalHeight += rectHeight_2;
+
+			
+			// sec.append("g").selectAll("textGroup")
+			// 	.data(data)
+			// 	.enter()
+			// 	.append("g:text")
+			// 	.attr("id", function(d, i) { return "textId" + i; })
+			// 	.attr("class", "textGroup")
+			// 	// .attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
+			// 	// .attr("y", function(d, i) { return startHeight + Math.floor(i/numRects) *rectSize_1; })
+			// 	.attr("x", rectWidth_2/2)
+			// 	.attr("y", function(d, i) { return (i)*(rectHeight_2+margin) + rectHeight_2/2; })
+			// 	.text(function(d) { return d.matchNum;})
+			// 	.attr("font-size", smallFont)
+			// 	.attr("text-anchor", "middle")
+			// 	.style("opacity", 0.1)
+			// 	// .on("click", toThirdLayer)
+			// 	// .on("mouseover", showTip)
+			// 	// .on("mouseleave", hideTip)
+			// 	// .call(scroll)
+			// 	// .on("dblclick.zoom", null)
+			// 	.transition()
+			// 	.duration(transTime)
+			// 	.attr("x", rectWidth_2/2)//function(d, i) { return (rectSize_2/2) + boundary + 2*margin + firstLayerWidth; })
+			// 	.attr("y", function(d, i) { return (i)*(rectHeight_2+margin) + 2*rectHeight_2/3; })
+			// 	.attr("font-size", rectHeight_2/2)
+			// 	.style("opacity", 1);	
+
+
+    	}
+
+    	function currectSort() {
+    		// TODO
+    		if (sort === "secID"){
+
+    		} else if (sort === "") {
+
+    		} 
+    	}
+
+    	function rectColor(data) {
+    		if (data.party == 100) return democraticColor; 
+			else if (data.party == 200) return republicanColor; 
+			else return noMatchColor;
     	}
 
     	function scrollUp(){
     		var container = document.getElementById("secLayerDiv");
     		var rowToScrollTo = document.getElementById("rect2Id"+0);
     		console.log(container, rowToScrollTo);
-    		container.scrollTop = rowToScrollTo.offsetTop;
+    		//container.scrollTop = rowToScrollTo.offsetTop;
     	}
 
 		function showTip(d, i){
@@ -372,9 +554,9 @@
 
 		function hideTip(d, i){
 			svg.select(Id+i)
-				.attr("fill", color);
+				.attr("fill", rectColor);
 			sec.select("#rect2Id"+i)
-				.attr("fill", color);
+				.attr("fill", rectColor);
 		}
 		
 		function toThirdLayer(d){
@@ -382,7 +564,33 @@
 			thirdLayer(d.secID);
 		}
 
+
 		controlFlow_2();
+	}
+
+	// the window between first and seond layer
+	function windowLayer1(){
+		// windowStart1 ;
+		// draw 2 lines
+		win1.append("g:line")
+			.attr("id", "upperLineId")
+			.attr("x1", 0)
+			.attr("y1", 0)
+			.attr("x2", boundary + margin)
+			.attr("y2", 0)
+			.attr("stroke", "black")
+			.attr("stroke-width", strokeWidth);
+
+			// console.log("window size", windowSize1);
+		win1.append("g:line")
+			.attr("id", "lowerLineId")
+			.attr("x1", 0)
+			.attr("y1", 0 + windowSize1)
+			.attr("x2", boundary + margin)
+			.attr("y2", secondLayerHeight)
+			.attr("stroke", "black")
+			.attr("stroke-width", strokeWidth);
+
 	}
 
 	function thirdLayer(secID){
@@ -396,7 +604,7 @@
 				drawAlignChart(data);
 				textDiv.append("pre")
 					.style("width", thirdLayerWidth)
-					//.style({"position": "absolute", "top": titleHight + thirdLayerHeight + "px", "left": firstLayerWidth + secondLayerWidth + 50 + "px"})
+					//.style({"position": "absolute", "top": titleHeight + thirdLayerHeight + "px", "left": firstLayerWidth + secondLayerWidth + 50 + "px"})
 					.html("<span style='background-color: red'>if this is highlighted, this method works</span>" + data.sectionText)
 			});
 		
@@ -620,7 +828,7 @@
 		billTextDiv.append("pre")
 				.attr("class", "billText")
 				.style("width", thirdLayerWidth)
-				//.style({"position": "absolute", "top": titleHight + thirdLayerHeight + "px", "left": firstLayerWidth + secondLayerWidth + 50 + "px"})
+				//.style({"position": "absolute", "top": titleHeight + thirdLayerHeight + "px", "left": firstLayerWidth + secondLayerWidth + 50 + "px"})
 				.html("<span style='background-color: yellow'>why not yellow</span>" + d.matchText)
 	}
 	
