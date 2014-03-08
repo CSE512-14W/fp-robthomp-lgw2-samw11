@@ -140,7 +140,7 @@ if (!isset($_GET["section"])) {
 	file_put_contents($outFileName, json_encode($out));
 } else {
 	$query = "(
-		SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docB, comp.textA, comp.textB, comp.docAstart, comp.docAend, comp.docBstart, comp.docBend, comp.differencesA, comp.differencesB, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, tex.text as BillText
+		SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docB, comp.textA, comp.textB, comp.docAstart, comp.docAend, comp.docBstart, comp.docBend, comp.differencesA, comp.differencesB, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText
 			FROM bills_sectcomp as comp, bills_sections as sec, bills, bills_secttext as tex
 			WHERE comp.idA = " . $_GET["section"] . " 
 				AND sec.Bill_id = bills.id 
@@ -155,7 +155,7 @@ if (!isset($_GET["section"])) {
 				)
 		) 
 		UNION 
-		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docA as docB, comp.textA as textB, comp.textB as textA, comp.docAstart as docBstart, comp.docAend as docBend, comp.docBstart as docAstart, comp.docBend as docAend, comp.differencesA as differencesB, comp.differencesB as differencesA, comp.compLabel, bills.IntrDate, bills.Party, bills.URL,  tex.text as BillText 
+		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docA as docB, comp.textA as textB, comp.textB as textA, comp.docAstart as docBstart, comp.docAend as docBend, comp.docBstart as docAstart, comp.docBend as docAend, comp.differencesA as differencesB, comp.differencesB as differencesA, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText 
 			FROM bills_sectcomp as comp, bills_sections as sec, bills, bills_secttext as tex
 			WHERE comp.idB = " . $_GET["section"] . " 
 				AND sec.Bill_id = bills.id 
@@ -205,6 +205,10 @@ if (!isset($_GET["section"])) {
 		$arr["Party"] = $row["Party"];
 		$arr["URL"] = $row["URL"];
 		$arr["matchText"] = $row["BillText"];
+		$arr["BillNum"] = $row["BillNum"];
+		$arr["BillType"] = $row["BillType"];
+		$arr["NameFull"] = $row["NameFull"];
+		$arr["Postal"] = $row["Postal"];
 		$rows[] = $arr;
 	}
 

@@ -45,7 +45,9 @@
 		thirdLayerHeight = height / 3 + 40,
 		alignChartWidth = thirdLayerWidth - 50,
 		alignChartHeight = height / 3,
-		alignChartPadding = 10;
+		alignChartPadding = 10,
+		billInfoDivWidth = 200,
+		textDivWidth = thirdLayerWidth;
 
 	// transition time
 	var transTime = 1000;
@@ -92,8 +94,28 @@
 						"top": (titleHight + thirdLayerHeight) + "px", 
 						"left": (firstLayerWidth + secondLayerWidth + 50) + "px",
 						"height": (height - thirdLayerHeight) + "px",
-						"width": thirdLayerHeight + "px",
+						"width": textDivWidth + "px",
 						"overflow": "scroll"});
+	
+	var billTextDiv = d3.select("body")
+					.append("div")
+					.style({
+						"position": "absolute", 
+						"top": (titleHight + thirdLayerHeight) + "px", 
+						"left": (firstLayerWidth + secondLayerWidth + 50 + textDivWidth) + "px",
+						"height": (height - thirdLayerHeight) + "px",
+						"width": textDivWidth + "px",
+						"overflow": "scroll"});
+	
+	var billInfoDiv = d3.select("body")
+						.append("div")
+						.style({
+							"position": "absolute", 
+							"top": titleHight + "px", 
+							"left": (firstLayerWidth + secondLayerWidth + thirdLayerWidth + 60) + "px",
+							"height": height + "px",
+							"width": billInfoDivWidth + "px",
+							"overflow": "scroll"});
 	
 	//TODO do we need this?
 	d3.select("svg")
@@ -107,7 +129,7 @@
 		 // Load the data
 		d3.json("./data/layer1.json",
 				function(d) {
-					/*var data = d.map(function(d) {
+					var data = d.map(function(d) {
 						if (d.party == 100){
 							// republican
 							republicData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
@@ -118,7 +140,7 @@
 						}
 					});
 					// start drawing the visualization
-		 			controlFlow_1();*/
+		 			controlFlow_1();
 		 			
 		 			d.sort(function(a,b) {
 		 				return a["secID"].localeCompare(b["secID"]);
@@ -378,7 +400,7 @@
 					.html("<span style='background-color: red'>if this is highlighted, this method works</span>" + data.sectionText)
 			});
 		
-		//still need to add axis labels
+		//TODO: still need to add axis labels
 		function drawAlignChart(data) {
 			var lengthScale = d3.scale.linear()
 				.domain([0, data.sectionText.length])
@@ -458,6 +480,8 @@
 					})
 					.on("click", function(d,i) { 
 						console.log("here is where the function to highlight text should be called");
+						cleanBillInfo();
+						writeBillInfo(d);
 					})
 					.transition()
 						.delay(2*transTime)
@@ -568,6 +592,43 @@
 		}
 	}
 
+	function writeBillInfo(d) {
+		billInfoDiv.append("h1")
+			.attr("class", "BillInfo")
+			.text(d.BillType + d.BillNum)
+		
+		var date = new Date(d.IntrDate * 1000);
+		
+		billInfoDiv.append("p")
+			.attr("class", "BillInfo")
+			.text("Introduced " + date);
+		
+		billInfoDiv.append("p")
+			.attr("class", "BillInfo")
+			.text("Author: " + d.NameFull + " (" + d.Postal + ")");
+		
+		billInfoDiv.append("p")
+			.attr("class", "BillInfo")
+			.text("Party: " + d.Party);
+		
+		billInfoDiv.append("p")
+			.attr("class", "BillInfo")
+			.append("a")
+				.attr("href", d.URL)
+				.text("Full Text");
+		
+		billTextDiv.append("pre")
+				.attr("class", "billText")
+				.style("width", thirdLayerWidth)
+				//.style({"position": "absolute", "top": titleHight + thirdLayerHeight + "px", "left": firstLayerWidth + secondLayerWidth + 50 + "px"})
+				.html("<span style='background-color: yellow'>why not yellow</span>" + d.matchText)
+	}
+	
+	function cleanBillInfo() {
+		billTextDiv.select(".billText").remove();
+		billInfoDiv.selectAll(".BillInfo").remove();
+	}
+	
 	function cleanSecondLayer(){
 		sec.selectAll(".rectSecond").remove();
 		sec.selectAll(".textGroup").remove();
@@ -576,6 +637,7 @@
 	function cleanThirdLayer(){
 		comp.select("#alignChart").remove();
 		textDiv.select("pre").remove();
+		cleanBillInfo();
 	}
 
 	function partyColor(party) {
