@@ -553,13 +553,12 @@
     	}
 
     	function currentSort(d) {
-    		// TODO
     		if (currSort === "SecID"){
     			return d.secID;
     		} else if (currSort === "Date") {
     			var date = d.date;
-    			console.log("year " + date.getYear());
-    			return (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getYear();
+    			//console.log("year " + dateFormat(date, "mm-dd-yy"));//date.format("mm-dd-yy"));
+    			return (date.getMonth() + 1) + "-" + date.getDate() + "-" + (date.getFullYear() + "").substr(2);
     		} else if (currSort === "Match") {
     			return d.matchNum;
     		} else {
