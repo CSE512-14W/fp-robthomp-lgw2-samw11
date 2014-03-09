@@ -9,15 +9,16 @@
 		bodyMargin = 6;
 
 	// color 
-	var layerOneBackgroundColor = d3.rgb(200,200,200),
+	var layerOneBackgroundColor = d3.rgb(200,200,200), // didn't use
 		republicanColor = "red",
 		democraticColor = "blue",
 		independentColor = "gray",
 		noMatchColor = "grey",
 		firstLayerCentralAxis = "grey",
-		rectBound = "black",
 		layerTwoBackgroundColor = d3.rgb(200,200,200)
 		highlight = "yellow",
+		backgroundColor = "white",
+		strokeColor = "black",
 		layerThreeBackgroundColor = d3.rgb(200,200,200);
 
 	// data in json format		
@@ -241,8 +242,8 @@
 					.attr("y", 0)
 					.attr("width", xPosition - margin)
 					.attr("height", sortByHeight)
-					.attr("fill", "white")
-					.attr("stroke", "black")
+					.attr("fill", backgroundColor)
+					.attr("stroke", strokeColor)
 					// .attr("stroke-width", strokeWidth)
 					.style("opacity", 0.1);
 
@@ -276,8 +277,8 @@
 					.attr("y", 0)
 					.attr("width", (xPosition - buttonXPos) / 3)
 					.attr("height", sortByHeight)
-					.attr("fill", "white")
-					.attr("stroke", "black")
+					.attr("fill", backgroundColor)
+					.attr("stroke", strokeColor)
 					.style("opacity", 0.1)
 					.on("click", rearrange);
 	}
@@ -532,8 +533,8 @@
 				// .attr("y", function(d, i) { return startHeight + Math.floor(i/numRects) *rectSize_1; })
 				.attr("x", rectWidth_2/2)
 				.attr("y", function(d, i) { return rectHeight_2/2 + i*(rectHeight_2+margin); })
-				.attr("fill", "white")
-				.attr("stroke", rectBound)
+				.attr("fill", backgroundColor)
+				.attr("stroke", strokeColor)
 				.style("opacity", 0.1)
 				.on("click", toThirdLayer)
 				.on("mouseover", showTip)
@@ -546,8 +547,8 @@
 				.attr("height", rectHeight_2)
 				.attr("x", 0)//function(d, i) { return boundary + 2*margin + firstLayerWidth; })
 				.attr("y", function(d, i) { return i*(rectHeight_2+margin); })
-				.attr("fill", "white")
-				.attr("stroke", rectBound);
+				.attr("fill", backgroundColor)
+				.attr("stroke", strokeColor);
 				// .style("opacity", 1);
 
     	}
@@ -575,6 +576,7 @@
     	function scrollUp(){
     		var container = document.getElementById("secLayerDiv");
     		var rowToScrollTo = document.getElementById("rectSecId"+clickedId);
+    		// TODO didn't support chrome
     		rowToScrollTo.scrollIntoView(true);
     		// console.log(container.scrollTop, rowToScrollTo, clickedId);
     		// container.scrollTop = rowToScrollTo.offsetTop;
@@ -592,7 +594,7 @@
 			// svg.select(Id+i)
 			// 	.attr("fill", rectColor);
 			sec.select("#rectSecId"+i)
-				.attr("fill", "white");
+				.attr("fill", backgroundColor);
 		}
 		
 		function toThirdLayer(d, i){
@@ -629,7 +631,7 @@
 			.attr("y1", yPos)
 			.attr("x2", boundary + margin)
 			.attr("y2", 0)
-			.attr("stroke", "black")
+			.attr("stroke", strokeColor)
 			.attr("stroke-width", strokeWidth);
 
 			// console.log("window size", windowSize1);
@@ -639,7 +641,7 @@
 			.attr("y1", yPos + windowSize1)
 			.attr("x2", boundary + margin)
 			.attr("y2", secondLayerHeight)
-			.attr("stroke", "black")
+			.attr("stroke", strokeColor)
 			.attr("stroke-width", strokeWidth);
 	}
 
@@ -651,7 +653,7 @@
 			.attr("y1", rectHeight_2/2)
 			.attr("x2", boundary)
 			.attr("y2", 0)
-			.attr("stroke", "black")
+			.attr("stroke", strokeColor)
 			.attr("stroke-width", strokeWidth);
 
 		win2.append("g:line")
@@ -660,7 +662,7 @@
 			.attr("y1", rectHeight_2/2)
 			.attr("x2", boundary)
 			.attr("y2", windowHeight2)
-			.attr("stroke", "black")
+			.attr("stroke", strokeColor)
 			.attr("stroke-width", strokeWidth);
 	}
 
