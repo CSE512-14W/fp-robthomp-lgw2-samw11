@@ -1,11 +1,41 @@
 (function() {
-
+	/*
+		Core TODO:
+			Proper text highlighting (waiting on Lucy)
+			"Mark as boilerplate" button somewhere
+			Add description text on top right
+		
+		Style TODO:
+			Title: 
+				decide on title text, size and font
+			Sort Buttons: 
+				add mouseover
+				make size better
+				add background color
+			Layer 1: 
+				Highlight row currently shown in layer 3
+				Draw window over current scroll region from region 2
+			Layer 2:
+				Have clicked element stay highlighted
+				Have scroll arrow "squash" when user scrolls selection offscreen
+				Hide/Custom scroll bar?
+			Alignment Chart:
+				Clicked matching stays highlighted
+				Add label on vertical axis
+			Section Text:
+				Hide/Custom scroll bar?
+			Matching Bill Info:
+				strip time from date row
+	*/
+	
 	var titleText = "How a bill becomes a law";
 	// frame variables
     var height = 720,
-		width = 1080;
-		margin = 20
-		titleHeight = 100
+		width = 1080,
+		margin = 20,
+		titleHeight = 40,
+		sortHeight = 20,
+		headerHeight = 70,
 		bodyMargin = 6;
 
 	// color 
@@ -19,6 +49,7 @@
 		highlight = "yellow",
 		backgroundColor = "white",
 		strokeColor = "black",
+		highlightColor = "yellow",
 		layerThreeBackgroundColor = d3.rgb(200,200,200);
 
 	// data in json format		
@@ -30,14 +61,15 @@
 		isFirst = true; // is it first page load?
 
 	// the top title layer variables
-	var fontSize = titleHeight / 2;
+	var fontSize = 2*titleHeight / 3;
+	var fontFamily = "Arial,Helvetica";
 
 	// first layer variables
 	var rowMax = width / 30,	// the length of each row
 		rowHeight,
 		axisWidth = 1,		// the central axis width 
 		firstLayerWidth = 2 * rowMax + axisWidth,
-		firstLayerHeight = height - titleHeight;
+		firstLayerHeight = height - headerHeight - margin;
 
 	// the window layer between first and second layer
 	var windowStart1 = d3.scale.linear(),
@@ -46,7 +78,7 @@
 
 	// second layer variables
 	var secondLayerWidth = width / 12,
-		secondLayerHeight = height - titleHeight,
+		secondLayerHeight = height - headerHeight - margin,
 		rectWidth_2 = secondLayerWidth * 0.9,
 		rectHeight_2 = rectWidth_2 / 2;
 		boundary = secondLayerWidth * 0.4;
@@ -67,22 +99,23 @@
 	var windowHeight2 = rectHeight_2;
 
 	// third layer variables
-	var thirdLayerWidth = 3*width / 5,
-		thirdLayerHeight = height / 3 + 40,
-		alignChartWidth = thirdLayerWidth - 50,
-		alignChartHeight = height / 3,
+	var alignChartWidth = 600,
+		alignChartHeight = (height - 2*margin) / 3,
 		alignChartPadding = 10,
 		billInfoDivWidth = 200,
-		textDivWidth = thirdLayerWidth
-		xPosition = firstLayerWidth + secondLayerWidth + boundary*2 + 2*margin;
+		textDivWidth = (alignChartWidth + billInfoDivWidth + margin)/2,
+		xPosition = firstLayerWidth + secondLayerWidth + boundary*2 + 2*margin,
+		sectionFontFamily = "",
+		sectionFontSize = "9px";
 
 	// transition time
 	var transTime = 1000;
 
 	d3.select("body")
-			.insert("svg:svg")
-		   	.attr("width", width)
-	    	.attr("height", height);
+		.style("margin", "0px")
+		.insert("svg:svg")
+		.attr("width", width)
+		.attr("height", height);
 
 	var titleRegion = d3.select("svg");
 
@@ -92,15 +125,15 @@
 				.attr("id", "firstLayout")
 				.attr("width", firstLayerWidth)
 				.attr("height", firstLayerHeight)
-				.attr("transform", "translate(0," + titleHeight + ")");
+				.attr("transform", "translate(" + margin + "," + (headerHeight + margin) + ")");
 
 	var sec = d3.select("body")
 					.append("div")
 					.attr("id", "secLayerDiv")
 					.style({
 						"position": "absolute", 
-						"top": (titleHeight + bodyMargin) + "px", 
-						"left": (boundary + 2*margin + firstLayerWidth) + "px",
+						"top": (headerHeight + margin) + "px", 
+						"left": (2*margin + firstLayerWidth) + "px",
 						"height": secondLayerHeight + "px",
 						"width": (secondLayerWidth + margin) + "px",
 						"overflow": "scroll"})
@@ -112,27 +145,27 @@
 				.attr("id", "between1And2Layer")
 				.attr("width", boundary)
 				.attr("height", secondLayerHeight)
-				.attr("transform", "translate(" + firstLayerWidth + "," + titleHeight + ")");
+				.attr("transform", "translate(" + (margin + firstLayerWidth) + "," + (headerHeight + margin) + ")");
 
 	var win2 = d3.select("svg")
 				.append("g")
 				.attr("id", "between2And3Layer")
 				.attr("width", boundary)
 				.attr("height", secondLayerHeight)
-				.attr("transform", "translate(" + (xPosition - boundary) + "," + titleHeight + ")");							
+				.attr("transform", "translate(" + (firstLayerWidth + secondLayerWidth + margin*2) + "," + (headerHeight + margin) + ")");							
 
 	var comp = d3.select("svg")
 				.append("g")
 				.attr("id", "thirdLayout")
-				.attr("transform", "translate(" + xPosition + "," + titleHeight + ")");
+				.attr("transform", "translate(" + (firstLayerWidth + secondLayerWidth + margin*3) + "," + (headerHeight + margin) + ")");
 
 	var textDiv = d3.select("body")
 					.append("div")
 					.style({
 						"position": "absolute", 
-						"top": (titleHeight + thirdLayerHeight) + "px", 
-						"left": xPosition + "px",
-						"height": (height - thirdLayerHeight) + "px",
+						"top": (headerHeight + alignChartHeight + margin*2) + "px", 
+						"left": (firstLayerWidth + secondLayerWidth + margin*3) + "px",
+						"height": (height - headerHeight - alignChartHeight - 2*margin) + "px",
 						"width": textDivWidth + "px",
 						"overflow": "scroll"});
 	
@@ -140,9 +173,9 @@
 					.append("div")
 					.style({
 						"position": "absolute", 
-						"top": (titleHeight + thirdLayerHeight) + "px", 
-						"left": (xPosition + textDivWidth) + "px",
-						"height": (height - thirdLayerHeight) + "px",
+						"top": (headerHeight + alignChartHeight + margin*2) + "px", 
+						"left": (firstLayerWidth + secondLayerWidth + margin*3 + textDivWidth + margin) + "px",
+						"height": (height - headerHeight - alignChartHeight - 2*margin) + "px",
 						"width": textDivWidth + "px",
 						"overflow": "scroll"});
 	
@@ -150,18 +183,12 @@
 						.append("div")
 						.style({
 							"position": "absolute", 
-							"top": titleHeight + "px", 
-							"left": (xPosition + thirdLayerWidth + 60) + "px",
-							"height": height + "px",
+							"top": (headerHeight + margin) + "px", 
+							"left": (firstLayerWidth + secondLayerWidth + margin*5 + alignChartWidth) + "px",
+							"height": alignChartHeight + margin + "px",
 							"width": billInfoDivWidth + "px",
+							"font-family": fontFamily,
 							"overflow": "scroll"});
-	
-	//TODO do we need this?
-	d3.select("svg")
-		.style({
-			"position": "absolute", 
-			"top": 10, 
-			"left": 10});
 
 	// sort data by match number and than by section id
 	function sortData(array, key, asec){
@@ -223,24 +250,25 @@
 					.append("text")
 					.attr("id", "visTitle")
 					.attr("x", margin)
-					.attr("y", 2*margin)
+					.attr("y", fontSize)
 					.text(titleText)
 					.attr("font-size", fontSize);
 
 
 		var sortRegion = titleRegion.append("g")
-							.attr("transform", "translate(0," + fontSize + ")");
+							.attr("transform", "translate(" + margin + "," + (titleHeight + 10) + ")");
 
-		var sortByHeight = titleHeight - fontSize - 2*bodyMargin,
-			buttonXPos = 100;
+		var sortByHeight = sortHeight,
+			sortByWidth = 250;
+			buttonWidth = 50;
 		
 		var data = [{name:"SecID", sort:"secID"}, {name:"Date", sort:"date"}, {name:"Match", sort:"matchNum"}]
 
 		sortRegion.append("rect")
 					.attr("id", "sortRegionID")
-					.attr("x", margin)
+					.attr("x", 0)
 					.attr("y", 0)
-					.attr("width", xPosition - margin)
+					.attr("width", sortByWidth)
 					.attr("height", sortByHeight)
 					.attr("fill", backgroundColor)
 					.attr("stroke", strokeColor)
@@ -250,10 +278,10 @@
 		sortRegion.append("text")
 					.attr("id", "sortBytextID")
 					.attr("class", "sortText")
-					.attr("x", margin)
+					.attr("x", 5)
 					.attr("y", 2*sortByHeight/3)
 					.text("Sort by:")
-					.attr("font-size", sortByHeight/2);
+					.attr("font-size", 2*sortByHeight/3);
 
 		sortRegion.selectAll("sortText")
 					.data(data)
@@ -261,8 +289,9 @@
 					.append("text")
 					.attr("class", "sortText")
 					.attr("id", function (d, i) { return "sortByTextId" + i; })
-					.attr("x", function (d, i) { return buttonXPos + (i)*(xPosition - buttonXPos) / 3; })
+					.attr("x", function (d, i) { return sortByWidth - (data.length - i)*buttonWidth + buttonWidth/2; })
 					.attr("y", 2*sortByHeight/3)
+					.attr("text-anchor", "middle")
 					.text(function (d) { return d.name; })	
 					.attr("font-size", sortByHeight/2);
 
@@ -273,9 +302,9 @@
 					.append("rect")
 					.attr("id", function (d, i) { return "sortBoxID" + i; })
 					.attr("class", "sortedButton")
-					.attr("x", function (d, i) { return buttonXPos + (i)*(xPosition - buttonXPos) / 3; })
+					.attr("x", function (d, i) { return sortByWidth - (data.length - i)*buttonWidth; })
 					.attr("y", 0)
-					.attr("width", (xPosition - buttonXPos) / 3)
+					.attr("width", buttonWidth)
 					.attr("height", sortByHeight)
 					.attr("fill", backgroundColor)
 					.attr("stroke", strokeColor)
@@ -362,7 +391,7 @@
  				.attr("id", "firstLayerAxis")
  				.attr("width", axisWidth)
 				.attr("height", rowHeight * sectionData.length)
-				.attr("x", function(d, i) { return margin + rowMax; })
+				.attr("x", rowMax)
 				.attr("y", 0)
 				.attr("fill", firstLayerCentralAxis);
  			
@@ -374,7 +403,7 @@
 				.attr("class", "repRow_1")
 				.attr("width", function(d) { return Math.min(d["s200"] + d["hr200"], rowMax); })
 				.attr("height", rowHeight)
-				.attr("x", function(d, i) { return margin + rowMax + axisWidth; })
+				.attr("x", function(d, i) { return rowMax + axisWidth; })
 				.attr("y", function(d, i) { return i*rowHeight; })
 				.attr("fill", republicanColor);
 				
@@ -386,7 +415,7 @@
 				.attr("class", "demRow_1")
 				.attr("width", function(d) { return Math.min(d["s100"] + d["hr100"], rowMax); })
 				.attr("height", rowHeight)
-				.attr("x", function(d, i) { return margin + rowMax - Math.min(d["s100"] + d["hr100"], rowMax); })
+				.attr("x", function(d, i) { return rowMax - Math.min(d["s100"] + d["hr100"], rowMax); })
 				.attr("y", function(d, i) { return i*rowHeight; })
 				.attr("fill", democraticColor);
 
@@ -508,6 +537,7 @@
 				.text(currentSort)
 				.attr("font-size", smallFont)
 				.attr("text-anchor", "middle")
+				.attr("font-family", fontFamily)
 				.style("opacity", 0.1)
 				// .on("click", toThirdLayer)
 				// .on("mouseover", showTip)
@@ -620,16 +650,16 @@
 		controlFlow_2();
 	}
 
-	// the window between first and seond layer
+	// the window between first and second layer
 	function windowLayer1(yPos){
 		// windowStart1 ;
 		// draw 2 lines
 		// console.log("ypos", yPos);
 		win1.append("g:line")
 			.attr("id", "upperLine_1Id")
-			.attr("x1", 0)
+			.attr("x1", -firstLayerWidth/4)
 			.attr("y1", yPos)
-			.attr("x2", boundary + margin)
+			.attr("x2", margin)
 			.attr("y2", 0)
 			.attr("stroke", strokeColor)
 			.attr("stroke-width", strokeWidth);
@@ -637,9 +667,9 @@
 			// console.log("window size", windowSize1);
 		win1.append("g:line")
 			.attr("id", "lowerLine_1Id")
-			.attr("x1", 0)
+			.attr("x1", -firstLayerWidth/4)
 			.attr("y1", yPos + windowSize1)
-			.attr("x2", boundary + margin)
+			.attr("x2", margin)
 			.attr("y2", secondLayerHeight)
 			.attr("stroke", strokeColor)
 			.attr("stroke-width", strokeWidth);
@@ -651,7 +681,7 @@
 			.attr("id", "upperLine_2Id")
 			.attr("x1", 0)
 			.attr("y1", rectHeight_2/2)
-			.attr("x2", boundary)
+			.attr("x2", margin)
 			.attr("y2", 0)
 			.attr("stroke", strokeColor)
 			.attr("stroke-width", strokeWidth);
@@ -660,15 +690,13 @@
 			.attr("id", "lowerLine_2Id")
 			.attr("x1", 0)
 			.attr("y1", rectHeight_2/2)
-			.attr("x2", boundary)
+			.attr("x2", margin)
 			.attr("y2", windowHeight2)
 			.attr("stroke", strokeColor)
 			.attr("stroke-width", strokeWidth);
 	}
 
 	function thirdLayer(secID){
-		// comp.select("#alignChart").remove();
-		// textDiv.select("pre").remove();
 		cleanThirdLayer();
 		
 		$.getJSON( "data/data.php", { section: secID} )
@@ -676,9 +704,9 @@
 				console.log(data);
 				drawAlignChart(data);
 				textDiv.append("pre")
-					.style("width", thirdLayerWidth)
-					//.style({"position": "absolute", "top": titleHeight + thirdLayerHeight + "px", "left": firstLayerWidth + secondLayerWidth + 50 + "px"})
-					.html("<span style='background-color: red'>if this is highlighted, this method works</span>" + data.sectionText)
+					.style("font-family", sectionFontFamily)
+					.style("font-size", sectionFontSize)
+					.html(data.sectionText)
 			});
 		
 		//TODO: still need to add axis labels
@@ -706,13 +734,18 @@
 			minStart = Math.max(minStart - 10, 0);
 			maxEnd = Math.min(maxEnd + 10, data.sectionText.length);
 			
+			if (data.matches.length == 0) {
+				minStart = 0;
+				maxEnd = data.sectionText.length;
+			}
+			
 			var adjustedLengthScale = d3.scale.linear()
 				.domain([minStart, maxEnd])
 				.range([0, alignChartHeight]);
 			
 			var chart = comp.append("g")
 				.attr("id", "alignChart")
-				.attr("transform", "translate(" + alignChartPadding + "," + alignChartPadding + ")");
+				.attr("transform", "translate(" + 0 + "," + 0 + ")");
 			
 			chart.append("rect")
 				.attr("x", 0)
@@ -721,14 +754,6 @@
 				.attr("width", 2)
 				.attr("fill", "black");
 			
-			/*chart.append("rect")
-				//.attr("d", "M0," + alignChartHeight + " L" + alignChartHeight + "," + alignChartHeight)
-				.attr("x", 0)
-				.attr("y", alignChartHeight)
-				.attr("height", 2)
-				.attr("width", alignChartWidth)
-				.attr("fill", "black");*/
-		
 			var markMaxWidth = 10;
 			var markMargin = 8;
 			var markWidth = Math.min(markMaxWidth, (alignChartWidth - markMargin)/data.matches.length - markMargin);
@@ -760,7 +785,12 @@
 							.attr("fill", function() { return partyColor(d.Party); });
 					})
 					.on("click", function(d,i) { 
-						console.log("here is where the function to highlight text should be called");
+						var highlight = data.sectionText;
+						highlight = highlight.slice(0,d.docAstart) + "<span style='background-color: " + highlightColor + "'>" + highlight.slice(d.docAstart,d.docAend) + "</span>" + highlight.slice(d.docAend);
+		
+						textDiv.select("pre")
+							.html(highlight);
+								
 						cleanBillInfo();
 						writeBillInfo(d);
 					})
@@ -772,73 +802,78 @@
 						.attr("y", function(d) { return alignChartHeight - adjustedLengthScale(parseInt(d.docAend)); })
 						.attr("height", function(d) { return adjustedLengthScale(parseInt(d.docAend)) - adjustedLengthScale(parseInt(d.docAstart));})
 						//.attr("width", 2*markWidth)
+			
 			var textHeight = 12;
 			var curQ = -1;
 			var curYear = -1;
 			var lastBar = 0;
-			for (var i = 0; i < data.matches.length; i++) {
-				var date = new Date(data.matches[i].IntrDate * 1000);
-				var newQ = Math.ceil((date.getMonth() + .1)/3);
-				if (newQ != curQ || date.getYear() != curYear) {
-					var x = ((alignChartWidth - (markWidth + markMargin)*data.matches.length)/2 + i*(markWidth + markMargin) + markMargin/2);
-					chart.append("path")
-						.attr("d", "M" + x + ",0 L" + x + "," + alignChartHeight)
-						.attr("stroke-width", 1)
-						.attr("stroke", "gray");
+			
+			if (data.matches.length > 0) {
+				//add bars between alignments that separates them by quarters of the year
+				for (var i = 0; i < data.matches.length; i++) {
+					var date = new Date(data.matches[i].IntrDate * 1000);
+					var newQ = Math.ceil((date.getMonth() + .1)/3);
+					if (newQ != curQ || date.getYear() != curYear) {
+						var x = ((alignChartWidth - (markWidth + markMargin)*data.matches.length)/2 + i*(markWidth + markMargin) + markMargin/2);
+						chart.append("path")
+							.attr("d", "M" + x + ",0 L" + x + "," + alignChartHeight)
+							.attr("stroke-width", 1)
+							.attr("stroke", "gray");
 					
-					if (i != 0) {
-						chart.append("text")
-							.attr("x", (lastBar + x)/2)
-							.attr("y", alignChartHeight + 8)
-							.attr("text-anchor", "middle")
-							.attr("font-size", 8)
-							.text("Q" + curQ);
+						if (i != 0) {
+							chart.append("text")
+								.attr("x", (lastBar + x)/2)
+								.attr("y", alignChartHeight + 8)
+								.attr("text-anchor", "middle")
+								.attr("font-size", 8)
+								.text("Q" + curQ);
 					
-						chart.append("text")
-							.attr("x", (lastBar + x)/2)
-							.attr("y", alignChartHeight + 2*8)
-							.attr("text-anchor", "middle")
-							.attr("font-size", 8)
-							.text((curYear + 1900));
+							chart.append("text")
+								.attr("x", (lastBar + x)/2)
+								.attr("y", alignChartHeight + 2*8)
+								.attr("text-anchor", "middle")
+								.attr("font-size", 8)
+								.text((curYear + 1900));
+						}
+					
+						lastBar = x;
+						curQ = newQ;
+						curYear = date.getYear();
 					}
-					
-					lastBar = x;
-					curQ = newQ;
-					curYear = date.getYear();
 				}
-			}
-			var x = ((alignChartWidth - (markWidth + markMargin)*data.matches.length)/2 + data.matches.length*(markWidth + markMargin) + markMargin/2);
-			chart.append("path")
-				.attr("d", "M" + x + ",0 L" + x + "," + alignChartHeight)
-				.attr("stroke-width", 1)
-				.attr("stroke", "gray");
 			
-			chart.append("text")
-				.attr("x", (lastBar + x)/2)
-				.attr("y", alignChartHeight + 8)
-				.attr("text-anchor", "middle")
-				.attr("font-size", 8)
-				.text("Q" + curQ);
-		
-			chart.append("text")
-				.attr("x", (lastBar + x)/2)
-				.attr("y", alignChartHeight + 2*8)
-				.attr("text-anchor", "middle")
-				.attr("font-size", 8)
-				.text((curYear + 1900));
-			
-			//If the min range is above zero, show dotted line
-			//if (minStart > 0) {
+				//draw the last bar to handle the fencepost case
+				var x = ((alignChartWidth - (markWidth + markMargin)*data.matches.length)/2 + data.matches.length*(markWidth + markMargin) + markMargin/2);
 				chart.append("path")
-					.attr("d", "M0," + (alignChartHeight - lengthScale(minStart)) + " L" + alignChartWidth + "," + (alignChartHeight - lengthScale(minStart)))
+					.attr("d", "M" + x + ",0 L" + x + "," + alignChartHeight)
 					.attr("stroke-width", 1)
-					.attr("stroke", "black")
-					//.attr("stroke-dasharray", "10,10")
-					.transition()
-						.delay(2*transTime)
-						.duration(transTime)
-						.attr("d", "M0," + (alignChartHeight - adjustedLengthScale(minStart)) + " L" + alignChartWidth + "," + (alignChartHeight - adjustedLengthScale(minStart)));
-						
+					.attr("stroke", "gray");
+			
+				chart.append("text")
+					.attr("x", (lastBar + x)/2)
+					.attr("y", alignChartHeight + 8)
+					.attr("text-anchor", "middle")
+					.attr("font-size", 8)
+					.text("Q" + curQ);
+		
+				chart.append("text")
+					.attr("x", (lastBar + x)/2)
+					.attr("y", alignChartHeight + 2*8)
+					.attr("text-anchor", "middle")
+					.attr("font-size", 8)
+					.text((curYear + 1900));
+			}
+			
+			chart.append("path")
+				.attr("d", "M0," + (alignChartHeight - lengthScale(minStart)) + " L" + alignChartWidth + "," + (alignChartHeight - lengthScale(minStart)))
+				.attr("stroke-width", 1)
+				.attr("stroke", "black")
+				.transition()
+					.delay(2*transTime)
+					.duration(transTime)
+					.attr("d", "M0," + (alignChartHeight - adjustedLengthScale(minStart)) + " L" + alignChartWidth + "," + (alignChartHeight - adjustedLengthScale(minStart)));
+					
+			if (data.matches.length > 0) {
 				chart.append("text")
 					.attr("x", alignChartWidth + 5)
 					.attr("y", alignChartHeight - lengthScale(minStart) + textHeight/2)
@@ -847,7 +882,7 @@
 						.delay(2*transTime)
 						.duration(transTime)
 						.attr("y", alignChartHeight - adjustedLengthScale(minStart) + textHeight/2);
-			//}
+			}
 			
 			if (maxEnd < data.sectionText.length) {
 				chart.append("path")
@@ -870,6 +905,17 @@
 						.attr("y", alignChartHeight - adjustedLengthScale(maxEnd) + textHeight/2);
 			}
 			
+			if (data.matches.length == 0) {
+				chart.append("text")
+					.attr("x", alignChartWidth/2)
+					.attr("y", alignChartHeight/2)
+					.attr("text-anchor", "middle")
+					.attr("font-family", "Arial, Helvetica")
+					.attr("opacity", .5)
+					.attr("font-size", 30)
+					.text("No Matches");
+			}
+			
 		}
 	}
 
@@ -888,9 +934,11 @@
 			.attr("class", "BillInfo")
 			.text("Author: " + d.NameFull + " (" + d.Postal + ")");
 		
+		var parties = {"100": "Democrat", "200": "Republican"};
+		
 		billInfoDiv.append("p")
 			.attr("class", "BillInfo")
-			.text("Party: " + d.Party);
+			.text("Party: " + parties[d.Party]);
 		
 		billInfoDiv.append("p")
 			.attr("class", "BillInfo")
@@ -898,11 +946,14 @@
 				.attr("href", d.URL)
 				.text("Full Text");
 		
+		var highlight = d.matchText;
+		highlight = highlight.slice(0,d.docBstart) + "<span style='background-color: " + highlightColor + "'>" + highlight.slice(d.docBstart,d.docBend) + "</span>" + highlight.slice(d.docBend);
+		
 		billTextDiv.append("pre")
 				.attr("class", "billText")
-				.style("width", thirdLayerWidth)
-				//.style({"position": "absolute", "top": titleHeight + thirdLayerHeight + "px", "left": firstLayerWidth + secondLayerWidth + 50 + "px"})
-				.html("<span style='background-color: yellow'>why not yellow</span>" + d.matchText)
+				.style("font-family", sectionFontFamily)
+				.style("font-size", sectionFontSize)
+				.html(highlight);
 	}
 	
 	function cleanBillInfo() {
