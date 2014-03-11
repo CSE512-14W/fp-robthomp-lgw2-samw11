@@ -15,12 +15,12 @@
 			Layer 1: 
 				Highlight row currently shown in layer 3
 				Draw window over current scroll region from region 2
+					Make window draggable
 			Layer 2:
-				Have clicked element stay highlighted
 				Have scroll arrow "squash" when user scrolls selection offscreen
 				Hide/Custom scroll bar?
+				Add some loading indicator on button when waiting on layer 3
 			Alignment Chart:
-				Clicked matching stays highlighted
 				Add label on vertical axis
 			Section Text:
 				Hide/Custom scroll bar?
@@ -465,6 +465,7 @@
 
     	function draw_2(){
     		// rect boxes
+			
 			sec.selectAll("repRow_2")
 				.data(data)
 				.enter()
@@ -623,14 +624,17 @@
 		function hideTip(d, i){
 			// svg.select(Id+i)
 			// 	.attr("fill", rectColor);
-			sec.select("#rectSecId"+i)
-				.attr("fill", backgroundColor);
+			if (i != clickedId) {
+				sec.select("#rectSecId"+i)
+					.attr("fill", backgroundColor);
+			}
 		}
 		
 		function toThirdLayer(d, i){
 			// cancel the previous one
 			d3.select("#rectSecId" + clickedId)
 				.attr("stroke-width", 1)
+				.attr("fill", backgroundColor)
 				.style("opacity", 0.1);
 
 			clickedId = i;
@@ -697,11 +701,12 @@
 	}
 
 	function thirdLayer(secID){
-		cleanThirdLayer();
+		
 		
 		$.getJSON( "data/data.php", { section: secID} )
 			.done(function( data ) {
-				console.log(data);
+				cleanThirdLayer();
+				
 				drawAlignChart(data);
 				textDiv.append("pre")
 					.style("font-family", sectionFontFamily)
@@ -715,13 +720,15 @@
 				.domain([0, data.sectionText.length])
 				.range([0, alignChartHeight]);
 			
-			var timeScale = d3.scale.linear()
+			/*var timeScale = d3.scale.linear()
 				.domain([1230940800, 1294012800])
-				.range([0, alignChartWidth]);
+				.range([0, alignChartWidth]);*/
 			
 			var srt = function(obj1, obj2) {
 				return obj1.IntrDate - obj2.IntrDate;
 			}
+			
+			var selectedInd = -1;
 			
 			data.matches.sort(srt);
 			
@@ -762,6 +769,7 @@
 				.data(data.matches)
 				.enter()
 					.append("rect")
+					.attr("id", function(d,i) { return "alignment" + i; })
 					.attr("class", "alignments")
 					//.attr("d", function(d) { return "M" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - lengthScale(parseInt(d.docAend))) + "L" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - lengthScale(parseInt(d.docAstart)))})
 					//.attr("stroke-width", 4)
@@ -777,17 +785,25 @@
 					.on("mouseover", function(d,i) { 
 						d3.select(this)
 							.attr("stroke-width", 2)
-							.attr("fill", "yellow");
+							.attr("fill", highlightColor);
 					})
 					.on("mouseout", function(d,i) { 
-						d3.select(this)
-							.attr("stroke-width", 1)
-							.attr("fill", function() { return partyColor(d.Party); });
+						if (i != selectedInd) {
+							d3.select(this)
+								.attr("stroke-width", 1)
+								.attr("fill", function() { return partyColor(d.Party); });
+						}
 					})
 					.on("click", function(d,i) { 
 						var highlight = data.sectionText;
 						highlight = highlight.slice(0,d.docAstart) + "<span style='background-color: " + highlightColor + "'>" + highlight.slice(d.docAstart,d.docAend) + "</span>" + highlight.slice(d.docAend);
+						
+						d3.select("#alignment" + selectedInd)
+							.attr("stroke-width", 1)
+							.attr("fill", function() { return partyColor(d.Party); });
 		
+						selectedInd = i;
+						
 						textDiv.select("pre")
 							.html(highlight);
 								
@@ -920,6 +936,7 @@
 	}
 
 	function writeBillInfo(d) {
+		
 		billInfoDiv.append("h1")
 			.attr("class", "BillInfo")
 			.text(d.BillType + d.BillNum)
