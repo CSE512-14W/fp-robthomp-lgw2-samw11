@@ -22,6 +22,7 @@
 				Add some loading indicator on button when waiting on layer 3
 			Alignment Chart:
 				Add label on vertical axis
+				Add texture to show house or senate bill type
 			Section Text:
 				Hide/Custom scroll bar?
 			Matching Bill Info:
@@ -705,7 +706,14 @@
 		
 		$.getJSON( "data/data.php", { section: secID} )
 			.done(function( data ) {
+				console.log(data);
+				base = data.sectionText;
+				processThirdLayerData(data);
+				
 				cleanThirdLayer();
+				
+				
+				
 				
 				drawAlignChart(data);
 				textDiv.append("pre")
@@ -719,10 +727,6 @@
 			var lengthScale = d3.scale.linear()
 				.domain([0, data.sectionText.length])
 				.range([0, alignChartHeight]);
-			
-			/*var timeScale = d3.scale.linear()
-				.domain([1230940800, 1294012800])
-				.range([0, alignChartWidth]);*/
 			
 			var srt = function(obj1, obj2) {
 				return obj1.IntrDate - obj2.IntrDate;
@@ -771,12 +775,9 @@
 					.append("rect")
 					.attr("id", function(d,i) { return "alignment" + i; })
 					.attr("class", "alignments")
-					//.attr("d", function(d) { return "M" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - lengthScale(parseInt(d.docAend))) + "L" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - lengthScale(parseInt(d.docAstart)))})
-					//.attr("stroke-width", 4)
-					//.attr("x", function(d) { return timeScale(d.IntrDate) - markWidth/2 + 4; })
 					.attr("x", function(d, i) { return (alignChartWidth - (markWidth + markMargin)*data.matches.length)/2 + i*(markWidth + markMargin) + markMargin})
-					.attr("y", function(d) { return alignChartHeight - lengthScale(parseInt(d.docAend)); })
-					.attr("height", function(d) { return lengthScale(parseInt(d.docAend)) - lengthScale(parseInt(d.docAstart));})
+					.attr("y", function(d) { return alignChartHeight - lengthScale(d.docAend); })
+					.attr("height", function(d) { return lengthScale(d.docAend) - lengthScale(d.docAstart);})
 					.attr("width", markWidth)
 					.attr("stroke", "black")
 					.attr("stroke-width", 1)
@@ -900,7 +901,7 @@
 						.attr("y", alignChartHeight - adjustedLengthScale(minStart) + textHeight/2);
 			}
 			
-			if (maxEnd < data.sectionText.length) {
+			//if (maxEnd < data.sectionText.length) {
 				chart.append("path")
 					.attr("d", "M0," + (alignChartHeight - lengthScale(maxEnd)) + " L" + alignChartWidth + "," + (alignChartHeight - lengthScale(maxEnd)))
 					.attr("stroke-width", 2)
@@ -919,7 +920,7 @@
 						.delay(2*transTime)
 						.duration(transTime)
 						.attr("y", alignChartHeight - adjustedLengthScale(maxEnd) + textHeight/2);
-			}
+			//}
 			
 			if (data.matches.length == 0) {
 				chart.append("text")
@@ -932,6 +933,23 @@
 					.text("No Matches");
 			}
 			
+		}
+		
+		function processThirdLayerData(data) {
+			for (var i = 0; i < data.matches.length; i++) {
+				
+				text = data.sectionText;
+				match = data.matches[i].textA;
+				var baseInd = getMatchIndices(data.sectionText, data.matches[i].textA);
+				text = data.matches[i].matchText;
+				match = data.matches[i].textB;
+				var otherInd = getMatchIndices(data.matches[i].matchText, data.matches[i].textB);
+				
+				data.matches[i].docAstart = baseInd[0];
+				data.matches[i].docAend = baseInd[1];
+				data.matches[i].docBstart = otherInd[0];
+				data.matches[i].docBend = otherInd[1];
+			}
 		}
 	}
 
@@ -1019,6 +1037,38 @@
 		}
 	}
 
+	function getMatchIndices(text, match) {
+		var t = text.replace(/<DELETED>/g, "         ");
+		t = t.replace(/<\/DELETED>/g, "          ");
+		t = t.replace(/[\W|_]/g," ");
+		t = t.toLowerCase();
+		
+		//console.log(t);
+		
+		var m = match.replace(/[\s-]/g,"");
+		
+		if (m.length > 600) {
+			var mStart = m.substr(0,500);
+			var mEnd = m.substr(m.length - 500,m.length);
+			mStart = mStart.split("").join("\\s*");
+			mEnd = mEnd.split("").join("\\s*");
+			var matchExpStart = new RegExp(mStart, "g");
+			var matchExpEnd = new RegExp(mEnd, "g");
+		
+			var start = t.search(matchExpStart);
+			var end = t.search(matchExpEnd) + t.match(matchExpEnd)[0].length;
+			return [start, end];
+		} else {
+			m = m.split("").join("\\s*");
+			var matchExp = new RegExp(m, "g");
+		
+			//console.log(matchExp);
+		
+			var start = t.search(matchExp);
+			var end = start + t.match(matchExp)[0].length;
+			return [start, end];
+		}
+	}
 	sortButton();
 	firstLayer();
 })();

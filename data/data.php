@@ -139,8 +139,8 @@ if (!isset($_GET["section"])) {
 	#but as things are the query takes about 30mins and so the data must be saved to file for later
 	file_put_contents($outFileName, json_encode($out));
 } else {
-	$query = "(
-		SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docB, comp.textA, comp.textB, comp.docAstart, comp.docAend, comp.docBstart, comp.docBend, comp.differencesA, comp.differencesB, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText
+	$query = "
+		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.textA as baseText, comp.textB as otherText, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText
 			FROM bills_sectcomp as comp, bills_sections as sec, bills, bills_secttext as tex
 			WHERE comp.idA = " . $_GET["section"] . " 
 				AND sec.Bill_id = bills.id 
@@ -153,23 +153,9 @@ if (!isset($_GET["section"])) {
 					comp.propA > " . $propLimit . "
 					OR comp.propB > " . $propLimit . "
 				)
-		) 
-		UNION 
-		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.docA as docB, comp.textA as textB, comp.textB as textA, comp.docAstart as docBstart, comp.docAend as docBend, comp.docBstart as docAstart, comp.docBend as docAend, comp.differencesA as differencesB, comp.differencesB as differencesA, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText 
-			FROM bills_sectcomp as comp, bills_sections as sec, bills, bills_secttext as tex
-			WHERE comp.idB = " . $_GET["section"] . " 
-				AND sec.Bill_id = bills.id 
-				AND comp.idA = sec.sec_id 
-				AND comp.idA = tex.sec_id
-				AND NOT sec.Bill_id = " . $billID . "
-				AND comp.SWalign > " . $SWalignLimit . "
-				AND comp.charMatch > " . $charMatchLimit . "
-				AND (
-					comp.propA > " . $propLimit . "
-					OR comp.propB > " . $propLimit . "
-				)
 		)" or die("Error in the consult.." . mysqli_error($link));
 
+	
 	/* sample query
 	(SELECT comp.charMatch, comp.gaps, comp.SWalign, comp.docB, comp.textA, comp.textB, comp.docAstart, comp.docAend, comp.docBstart, comp.docBend, comp.differencesA, comp.differencesB, comp.compLabel, bills.IntrDate, bills.Party, bills.URL 
 		FROM bills_sectcomp as comp, bills_sections as sec, bills 
@@ -188,18 +174,51 @@ if (!isset($_GET["section"])) {
 	#just loop through the query response and record the rows
 	while($row = mysqli_fetch_array($result)) {
 		$arr = array();
+		$arr["compID"] = $row["compID"];
 		$arr["charMatch"] = $row["charMatch"];
 		$arr["gaps"] = $row["gaps"];
 		$arr["SWalign"] = $row["SWalign"];
-		$arr["docB"] = $row["docB"];
-		$arr["textA"] = $row["textA"];
-		$arr["textB"] = $row["textB"];
-		$arr["docAstart"] = $row["docAstart"];
-		$arr["docBstart"] = $row["docBstart"];
-		$arr["docAend"] = $row["docAend"];
-		$arr["docBend"] = $row["docBend"];
-		$arr["differencesA"] = $row["differencesB"];
-		$arr["differencesB"] = $row["differencesB"];
+		$arr["textA"] = $row["baseText"];
+		$arr["textB"] = $row["otherText"];
+		$arr["compLabel"] = $row["compLabel"];
+		$arr["IntrDate"] = strtotime($row["IntrDate"]);
+		$arr["Party"] = $row["Party"];
+		$arr["URL"] = $row["URL"];
+		$arr["matchText"] = $row["BillText"];
+		$arr["BillNum"] = $row["BillNum"];
+		$arr["BillType"] = $row["BillType"];
+		$arr["NameFull"] = $row["NameFull"];
+		$arr["Postal"] = $row["Postal"];
+		$rows[] = $arr;
+	}
+
+	$query = "
+		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.textB as baseText, comp.textA as otherText, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText 
+			FROM bills_sectcomp as comp, bills_sections as sec, bills, bills_secttext as tex
+			WHERE comp.idB = " . $_GET["section"] . " 
+				AND sec.Bill_id = bills.id 
+				AND comp.idA = sec.sec_id 
+				AND comp.idA = tex.sec_id
+				AND NOT sec.Bill_id = " . $billID . "
+				AND comp.SWalign > " . $SWalignLimit . "
+				AND comp.charMatch > " . $charMatchLimit . "
+				AND (
+					comp.propA > " . $propLimit . "
+					OR comp.propB > " . $propLimit . "
+				)
+		)" or die("Error in the consult.." . mysqli_error($link));
+
+	$result = $link->query($query);
+
+	#just loop through the query response and record the rows
+	while($row = mysqli_fetch_array($result)) {
+		$arr = array();
+		$arr["compID"] = $row["compID"];
+		$arr["charMatch"] = $row["charMatch"];
+		$arr["gaps"] = $row["gaps"];
+		$arr["SWalign"] = $row["SWalign"];
+		$arr["textA"] = $row["baseText"];
+		$arr["textB"] = $row["otherText"];
 		$arr["compLabel"] = $row["compLabel"];
 		$arr["IntrDate"] = strtotime($row["IntrDate"]);
 		$arr["Party"] = $row["Party"];
