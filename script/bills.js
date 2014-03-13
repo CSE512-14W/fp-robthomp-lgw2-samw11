@@ -40,8 +40,8 @@
 
 	// color 
 	var layerOneBackgroundColor = d3.rgb(200,200,200), // didn't use
-		republicanColor = "red",
-		democraticColor = "blue",
+		republicanColor = "#fda4a7",//"#95474c",
+		democraticColor = "#99c0e5",//"#396283",
 		independentColor = "gray",
 		noMatchColor = "grey",
 		firstLayerCentralAxis = "grey",
@@ -49,7 +49,7 @@
 		highlight = "yellow",
 		backgroundColor = "white",
 		strokeColor = "black",
-		highlightColor = "yellow",
+		highlightColor = "#ffffbb",
 		layerThreeBackgroundColor = d3.rgb(200,200,200);
 
 	// data in json format		
