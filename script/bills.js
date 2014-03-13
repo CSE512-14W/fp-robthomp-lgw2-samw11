@@ -1,7 +1,6 @@
 (function() {
 	/*
 		Core TODO:
-			Proper text highlighting (waiting on Lucy)
 			"Mark as boilerplate" button somewhere
 			Add description text on top right
 		
