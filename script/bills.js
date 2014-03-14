@@ -26,6 +26,7 @@
 				Hide/Custom scroll bar?
 			Matching Bill Info:
 				strip time from date row
+				show if bill became law or not
 	*/
 	
 	var titleText = "How a bill becomes a law";
@@ -50,7 +51,8 @@
 		backgroundColor = "white",
 		strokeColor = "black",
 		highlightColor = "#ffffbb",
-		layerThreeBackgroundColor = d3.rgb(200,200,200);
+		layerThreeBackgroundColor = d3.rgb(200,200,200),
+		otherBillBackground = "#eeeeee";
 
 	// data in json format		
 	var sectionData = [];
@@ -102,11 +104,11 @@
 	var alignChartWidth = 600,
 		alignChartHeight = (height - 2*margin) / 3,
 		alignChartPadding = 10,
-		billInfoDivWidth = 200,
+		billInfoDivWidth = 360,
 		textDivWidth = (alignChartWidth + billInfoDivWidth + margin)/2,
 		xPosition = firstLayerWidth + secondLayerWidth + boundary*2 + 2*margin,
 		sectionFontFamily = "",
-		sectionFontSize = "9px";
+		sectionFontSize = "11px";
 
 	// transition time
 	var transTime = 1000;
@@ -188,6 +190,7 @@
 							"height": alignChartHeight + margin + "px",
 							"width": billInfoDivWidth + "px",
 							"font-family": fontFamily,
+							"background-color": otherBillBackground,
 							"overflow": "scroll"});
 
 	// sort data by match number and than by section id
@@ -223,6 +226,9 @@
 
 		d3.select("#lowerLine_1Id")
 						.attr("y1", windowStart1(div) + windowSize1);
+		
+		d3.select("#box_1Id")
+						.attr("y", windowStart1(div));
 
 		thirdLayerPointer(div);
 	}
@@ -661,7 +667,7 @@
 		// console.log("ypos", yPos);
 		win1.append("g:line")
 			.attr("id", "upperLine_1Id")
-			.attr("x1", -firstLayerWidth/4)
+			.attr("x1", 0)
 			.attr("y1", yPos)
 			.attr("x2", margin)
 			.attr("y2", 0)
@@ -671,10 +677,26 @@
 			// console.log("window size", windowSize1);
 		win1.append("g:line")
 			.attr("id", "lowerLine_1Id")
-			.attr("x1", -firstLayerWidth/4)
+			.attr("x1", 0)
 			.attr("y1", yPos + windowSize1)
 			.attr("x2", margin)
 			.attr("y2", secondLayerHeight)
+			.attr("stroke", strokeColor)
+			.attr("stroke-width", strokeWidth);
+		
+		/*win1.append("g:path")
+			.attr("id", "lowerLine_1Id")
+			.attr("d", "M" + 0 + "," + (yPos + windowSize1) + "C" + (margin/3) + "," + (yPos + windowSize1 + (secondLayerHeight - yPos - windowSize1)/5) + " " + (2*margin/3) + "," + (yPos + windowSize1 + 1*(secondLayerHeight - yPos - windowSize1)/5) + " " + (margin) + "," + (secondLayerHeight))
+			.attr("stroke", strokeColor)
+			.attr("stroke-width", 1);*/
+		
+		win1.append("g:rect")
+			.attr("id", "box_1Id")
+			.attr("x", -firstLayerWidth)
+			.attr("y", yPos)
+			.attr("width", firstLayerWidth)
+			.attr("height", windowSize1)
+			.attr("fill", "none")
 			.attr("stroke", strokeColor)
 			.attr("stroke-width", strokeWidth);
 	}
@@ -775,7 +797,7 @@
 					.attr("id", function(d,i) { return "alignment" + i; })
 					.attr("class", "alignments")
 					.attr("x", function(d, i) { return (alignChartWidth - (markWidth + markMargin)*data.matches.length)/2 + i*(markWidth + markMargin) + markMargin})
-					.attr("y", function(d) { return alignChartHeight - lengthScale(d.docAend); })
+					.attr("y", function(d) { return lengthScale(d.docAstart); })
 					.attr("height", function(d) { return lengthScale(d.docAend) - lengthScale(d.docAstart);})
 					.attr("width", markWidth)
 					.attr("stroke", "black")
@@ -798,9 +820,12 @@
 						var highlight = data.sectionText;
 						highlight = highlight.slice(0,d.docAstart) + "<span style='background-color: " + highlightColor + "'>" + highlight.slice(d.docAstart,d.docAend) + "</span>" + highlight.slice(d.docAend);
 						
+						billInfoDiv.style("background-color", otherBillBackground);
+						billTextDiv.style("background-color", otherBillBackground);
+						
 						d3.select("#alignment" + selectedInd)
 							.attr("stroke-width", 1)
-							.attr("fill", function() { return partyColor(d.Party); });
+							.attr("fill", function() { return partyColor(data.matches[selectedInd].Party); });
 		
 						selectedInd = i;
 						
@@ -815,7 +840,7 @@
 						.duration(transTime)
 						//.attr("stroke-width", 2*markWidth)
 						//.attr("d", function(d) { return "M" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - adjustedLengthScale(parseInt(d.docAend))) + "L" + (timeScale(d.IntrDate) + alignChartPadding) + "," + (alignChartPadding + alignChartHeight - adjustedLengthScale(parseInt(d.docAstart)))})
-						.attr("y", function(d) { return alignChartHeight - adjustedLengthScale(parseInt(d.docAend)); })
+						.attr("y", function(d) { return adjustedLengthScale(parseInt(d.docAstart)); })
 						.attr("height", function(d) { return adjustedLengthScale(parseInt(d.docAend)) - adjustedLengthScale(parseInt(d.docAstart));})
 						//.attr("width", 2*markWidth)
 			
@@ -881,44 +906,44 @@
 			}
 			
 			chart.append("path")
-				.attr("d", "M0," + (alignChartHeight - lengthScale(minStart)) + " L" + alignChartWidth + "," + (alignChartHeight - lengthScale(minStart)))
+				.attr("d", "M0," + lengthScale(minStart) + " L" + alignChartWidth + "," + lengthScale(minStart))
 				.attr("stroke-width", 1)
 				.attr("stroke", "black")
 				.transition()
 					.delay(2*transTime)
 					.duration(transTime)
-					.attr("d", "M0," + (alignChartHeight - adjustedLengthScale(minStart)) + " L" + alignChartWidth + "," + (alignChartHeight - adjustedLengthScale(minStart)));
+					.attr("d", "M0," + adjustedLengthScale(minStart) + " L" + alignChartWidth + "," + adjustedLengthScale(minStart));
 					
 			if (data.matches.length > 0) {
 				chart.append("text")
 					.attr("x", alignChartWidth + 5)
-					.attr("y", alignChartHeight - lengthScale(minStart) + textHeight/2)
+					.attr("y", lengthScale(minStart) + textHeight/2)
 					.text(Math.round(minStart/data.sectionText.length * 100) + "%")
 					.transition()
 						.delay(2*transTime)
 						.duration(transTime)
-						.attr("y", alignChartHeight - adjustedLengthScale(minStart) + textHeight/2);
+						.attr("y", adjustedLengthScale(minStart) + textHeight/2);
 			}
 			
 			//if (maxEnd < data.sectionText.length) {
 				chart.append("path")
-					.attr("d", "M0," + (alignChartHeight - lengthScale(maxEnd)) + " L" + alignChartWidth + "," + (alignChartHeight - lengthScale(maxEnd)))
+					.attr("d", "M0," + lengthScale(maxEnd) + " L" + alignChartWidth + "," + lengthScale(maxEnd))
 					.attr("stroke-width", 2)
 					.attr("stroke", "black")
 					//.attr("stroke-dasharray", "10,10")
 					.transition()
 						.delay(2*transTime)
 						.duration(transTime)
-						.attr("d", "M0," + (alignChartHeight - adjustedLengthScale(maxEnd)) + " L" + alignChartWidth + "," + (alignChartHeight - adjustedLengthScale(maxEnd)));
+						.attr("d", "M0," + adjustedLengthScale(maxEnd) + " L" + alignChartWidth + "," + adjustedLengthScale(maxEnd));
 						
 				chart.append("text")
 					.attr("x", alignChartWidth + 5)
-					.attr("y", alignChartHeight - lengthScale(maxEnd) + textHeight/2)
+					.attr("y", lengthScale(maxEnd) + textHeight/2)
 					.text(Math.round(maxEnd/data.sectionText.length * 100) + "%")
 					.transition()
 						.delay(2*transTime)
 						.duration(transTime)
-						.attr("y", alignChartHeight - adjustedLengthScale(maxEnd) + textHeight/2);
+						.attr("y", adjustedLengthScale(maxEnd) + textHeight/2);
 			//}
 			
 			if (data.matches.length == 0) {
@@ -962,7 +987,7 @@
 		
 		billInfoDiv.append("p")
 			.attr("class", "BillInfo")
-			.text("Introduced " + date);
+			.text("Introduced " + date.getMonth() + "/" + date.getDate() + "/" + date.getFullYear());
 		
 		billInfoDiv.append("p")
 			.attr("class", "BillInfo")
@@ -1004,6 +1029,7 @@
 	function cleanWindow1Layer(){
 		win1.select("#upperLine_1Id").remove();
 		win1.select("#lowerLine_1Id").remove();
+		win1.select("#box_1Id").remove();
 	}
 
 	function cleanSecondLayer(){
@@ -1023,6 +1049,8 @@
 	function cleanThirdLayer(){
 		comp.select("#alignChart").remove();
 		textDiv.select("pre").remove();
+		billInfoDiv.style("background-color", backgroundColor);
+		billTextDiv.style("background-color", backgroundColor);
 		cleanBillInfo();
 	}
 
