@@ -16,3 +16,21 @@ Core TODO:
 	Get matching section ID working - R
 	Make background colors less harsh - R
 	SHow mismatches in different highlight - R
+
+
+Done:
+	Fix the section mismatch bug when changing the sorting.
+	add sort button mouseover
+	add sort button background color 
+	layer 2 scroll the section box exactly to the top of the view
+	Add shallow boxes on the first layer
+	Make layer 1 overlay window draggable, also able to click the shallow area and move to the clicked position
+	Have layer 2 overlay scroll arrow "squash" when user scrolls selection offscreen
+	Add some loading indicator on button when waiting on layer 3 (pulsing border width)
+
+Follow up:
+	make sort button size better (I am not sure is this size "better", it seems fine for me)
+	Highlight the small rows in the first layer when moverover the second layer (it seems hard to see using yellow, and do we also highlight the clicked row in the first layer?)
+
+Bug:
+	A vertical line between the first and second layer appear after couple seconds in firefox

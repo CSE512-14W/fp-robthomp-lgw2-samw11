@@ -9,7 +9,7 @@
 		width = 1080,
 		margin = 20,
 		titleHeight = 40,
-		sortHeight = 20,
+		
 		headerHeight = 70,
 		bodyMargin = 6;
 
@@ -22,35 +22,48 @@
 		firstLayerCentralAxis = "grey",
 		layerTwoBackgroundColor = d3.rgb(200,200,200)
 		highlight = "yellow",
-		backgroundColor = "white",
+		whiteBackgroundColor = "white",
 		strokeColor = "black",
 		highlightColor = "#ffffbb",
 		layerThreeBackgroundColor = d3.rgb(200,200,200),
-		otherBillBackground = "#eeeeee";
+		otherBillBackground = "#eeeeee"
+		clickedColor = "yellow";
 
 	// data in json format		
 	var sectionData = [];
 
-	// default settings sort by secID 
-	var currSort = "SecID",
-		clickedId = 0,
+	var clickedId = 0,	// default setting, the first one is clicked
 		isFirst = true; // is it first page load?
 
 	// the top title layer variables
-	var fontSize = 2*titleHeight / 3;
-	var fontFamily = "Arial,Helvetica";
+	var fontSize = 2*titleHeight / 3,
+		fontFamily = "Arial,Helvetica";
+
+	// sortBy button region
+	var sortByWidth = 250,
+		buttonWidth = 60,
+		sortByHeight = 20,
+		dataSortBy = [{name:"SecID", sort:"secID"}, {name:"Date", sort:"date"}, {name:"Match", sort:"matchNum"}],
+		currSort = "SecID",
+		clickedSortByBox = 0, 	// default settings sort by secID 
+		opacityUnclickSortBy = 0.2,
+		opacityClickSortBy = 0.5,
+		textSizeAndBoxHeight = 2*sortByHeight/3;
 
 	// first layer variables
 	var rowMax = width / 30,	// the length of each row
 		rowHeight,
 		axisWidth = 1,		// the central axis width 
 		firstLayerWidth = 2 * rowMax + axisWidth,
-		firstLayerHeight = height - headerHeight - margin;
+		firstLayerHeight = height - headerHeight - margin,
+		darkbackground = "#eeeeee",
+		backgroundOpacity = 0.5;;
 
 	// the window layer between first and second layer
 	var windowStart1 = d3.scale.linear(),
 		windowSize1 = 0,
-		strokeWidth = 2;
+		strokeWidth = 1;
+		
 
 	// second layer variables
 	var secondLayerWidth = width / 12,
@@ -62,6 +75,8 @@
 		smallFont = 0,
 		totalHeight = 0,
 		axisWidth_2 = axisWidth * 2,
+		clickedOpacitySecLayer = 0.5,
+		unClickedOpacitySecLayer = 0.1,
 		// dem and rep bar width
 		scaleWidth = d3.scale.linear()
 						.domain([0, rowMax])
@@ -85,7 +100,8 @@
 		sectionFontSize = "11px";
 
 	// transition time
-	var transTime = 1000;
+	var transTime = 1000,
+		extraDelay = 500;
 
 	d3.select("body")
 		.style("margin", "0px")
@@ -173,11 +189,20 @@
 							"font-family": fontFamily,
 							"overflow": "scroll"});
 
-	// sort data by match number and than by section id
+	var drag = d3.behavior.drag()
+			    .on("drag", dragged);
+
+	/*
+	 * Sort data by key: secid, date or match
+	 * @param array the secionData
+	 * @param key the param that need to be sorted: either secid, date or match
+	 * @param asec in ascending or descending order
+	 */
 	function sortData(array, key, asec){
-		// console.log("before clicked ID update " + clickedId)
 		// update the click id
 		var secId = array[clickedId].secID;
+		// console.log("SortData secid and clicked id " + secId + " " + clickedId);
+		// sort the data
 		array.sort(function(a, b) {
 			if (asec) {
 				return a[key] > b[key] ? 1 : ((a[key] < b[key]) ? -1 : 0);
@@ -185,53 +210,104 @@
 				return a[key] > b[key] ? -1 : ((a[key] < b[key]) ? 1 : 0);
 			}
 		});
-
+		// is this the first page load?
 		if (isFirst) {
 			return;
 		}
+		// at this point, user clicks the sort button. So we need to find the 
+		// corresponding secid and update the clickedId
 		for (var i = 0; i < array.length; i++){
 			if (array[i].secID === secId) {
-				// console.log("update clicked id " + i);
+				// console.log("update secid and clicked id " + array[i].secID + " " + i);
 				clickedId = i;
 				return;
 			}
 		}
 	}
 
+	/*
+	 * The window section between first and second layer
+	 * move the scrolling bar to the proper position 
+	 */
 	function scrollPos(){
 		var div = document.getElementById("secLayerDiv").scrollTop;
+		var startPos = windowStart1(div);
+
+		changeFirstLayerWindow(startPos);
+		
+		thirdLayerPointer(div);
+	}
+
+	function dragged(d) {
+		var yPosition = d3.mouse(this)[1];
+		yPosition = Math.min(Math.max(yPosition, 0), firstLayerHeight - windowSize1);
+
+		changeFirstLayerWindow(yPosition);
+	}
+
+	function changeFirstLayerWindow(position){
+		// scroll to the proper section box in second layer
+		var offsetVal = windowStart1.invert(position);
+		 $("#secLayerDiv").scrollTop(offsetVal);
+		thirdLayerPointer(offsetVal);
 		// move the window between 1 and 2 layer
 		d3.select("#upperLine_1Id")
-							.attr("y1", windowStart1(div));
+							.attr("y1", position);
 
 		d3.select("#lowerLine_1Id")
-						.attr("y1", windowStart1(div) + windowSize1);
+						.attr("y1", position + windowSize1);
 		
 		d3.select("#box_1Id")
-						.attr("y", windowStart1(div));
+						.attr("y", position);
 
-		thirdLayerPointer(div);
+		d3.select("#top_box_1Id")
+						.attr("height", position);
+
+		d3.select("#buttom_box_1Id")
+						.attr("y", position + windowSize1)
+						.attr("height", firstLayerHeight - position - windowSize1);
+
 	}
 
 	// the window allow between 2nd and 3rd layer
 	function thirdLayerPointer(div){
-		// TODO need to make this smoother
+		
 		var selectedBox = d3.select("#rectSecId"+clickedId)[0][0].y.animVal.value;
 		
 		var y = Math.min(Math.max(selectedBox - div, 0), secondLayerHeight - windowHeight2);
+
+		if (y == 0){
+			var ySquash = d3.scale.linear()
+						.domain([totalHeight, 0]) // 27609
+						.range([-rectHeight_2/2, 0]);
+			y = ySquash(div);
+		} else if (y == secondLayerHeight - windowHeight2) {
+			var ySquash = d3.scale.linear()
+						.domain([0, totalHeight])
+						.range([secondLayerHeight - rectHeight_2/2, secondLayerHeight - rectHeight_2]);
+			y = ySquash(div);
+		} else if (isFirst) {
+			// edge case, when the first page load, 
+			// need to set y = 0 in order to point to the middle of the box
+			y = 0;
+		}
 
 		// console.log(div, selectedBox, y);
 		// move the window between 2 and 3 layer
 		d3.select("#upperLine_2Id")
 			.attr("y1", y + rectHeight_2 / 2)
-			.attr("y2", y );
+			.attr("y2", Math.max(y, 0));
 
 		d3.select("#lowerLine_2Id")
 			.attr("y1", y + rectHeight_2 / 2)
-			.attr("y2", y + rectHeight_2);
+			.attr("y2", Math.min(y + rectHeight_2, secondLayerHeight));
 	}
 
+	/*
+	 * Draw the sort buttons
+	 */
 	function sortButton(){
+		// The title
 		titleRegion.append("g")
 					.append("text")
 					.attr("id", "visTitle")
@@ -240,15 +316,9 @@
 					.text(titleText)
 					.attr("font-size", fontSize);
 
-
+		// sort buttons border
 		var sortRegion = titleRegion.append("g")
 							.attr("transform", "translate(" + margin + "," + (titleHeight + 10) + ")");
-
-		var sortByHeight = sortHeight,
-			sortByWidth = 250;
-			buttonWidth = 50;
-		
-		var data = [{name:"SecID", sort:"secID"}, {name:"Date", sort:"date"}, {name:"Match", sort:"matchNum"}]
 
 		sortRegion.append("rect")
 					.attr("id", "sortRegionID")
@@ -256,64 +326,90 @@
 					.attr("y", 0)
 					.attr("width", sortByWidth)
 					.attr("height", sortByHeight)
-					.attr("fill", backgroundColor)
+					.attr("fill", whiteBackgroundColor)
 					.attr("stroke", strokeColor)
-					// .attr("stroke-width", strokeWidth)
 					.style("opacity", 0.1);
 
+		// Sort by text
 		sortRegion.append("text")
 					.attr("id", "sortBytextID")
 					.attr("class", "sortText")
 					.attr("x", 5)
-					.attr("y", 2*sortByHeight/3)
+					.attr("y", textSizeAndBoxHeight)
 					.text("Sort by:")
-					.attr("font-size", 2*sortByHeight/3);
+					.attr("font-size", textSizeAndBoxHeight);
 
+		// button text: secID, Date and Match
 		sortRegion.selectAll("sortText")
-					.data(data)
+					.data(dataSortBy)
 					.enter()
 					.append("text")
 					.attr("class", "sortText")
 					.attr("id", function (d, i) { return "sortByTextId" + i; })
-					.attr("x", function (d, i) { return sortByWidth - (data.length - i)*buttonWidth + buttonWidth/2; })
-					.attr("y", 2*sortByHeight/3)
+					.attr("x", function (d, i) { return sortByWidth - (dataSortBy.length - i)*buttonWidth + buttonWidth/2; })
+					.attr("y", textSizeAndBoxHeight)
 					.attr("text-anchor", "middle")
 					.text(function (d) { return d.name; })	
-					.attr("font-size", sortByHeight/2);
+					.attr("font-size", textSizeAndBoxHeight);
 
-		// sec id sorted button
+		// the sorted button
 		sortRegion.selectAll("sortedButton")
-					.data(data)
+					.data(dataSortBy)
 					.enter()
 					.append("rect")
 					.attr("id", function (d, i) { return "sortBoxID" + i; })
 					.attr("class", "sortedButton")
-					.attr("x", function (d, i) { return sortByWidth - (data.length - i)*buttonWidth; })
+					.attr("x", function (d, i) { return sortByWidth - (dataSortBy.length - i)*buttonWidth; })
 					.attr("y", 0)
 					.attr("width", buttonWidth)
 					.attr("height", sortByHeight)
-					.attr("fill", backgroundColor)
+					.attr("fill", whiteBackgroundColor)
 					.attr("stroke", strokeColor)
-					.style("opacity", 0.1)
+					.style("opacity", opacityUnclickSortBy)
+					.on("mouseover", function (d, i) { d3.select("#sortBoxID" + i).attr("fill", clickedColor); })
+					.on("mouseleave", function (d, i) { if (i != clickedSortByBox) d3.select("#sortBoxID" + i).attr("fill", whiteBackgroundColor); })
 					.on("click", rearrange);
+
+		// Default setting: sort by the secId 
+		d3.select("#sortBoxID" + clickedSortByBox)
+			.attr("fill", clickedColor)
+			.style("opacity", opacityClickSortBy)
 	}
 
-	function rearrange (d) {
+	/*
+	 * Rearrange the data order base on the sorting
+	 * @param d the sectionData
+	 * @param i the sort button index
+	 */
+	function rearrange (d, i) {
+		// reset all the color to un-click
+		d3.selectAll("#sortBoxID" + clickedSortByBox)
+			.attr("fill", whiteBackgroundColor)
+			.style("opacity", opacityUnclickSortBy);
+
+		// update the sort button index
+		clickedSortByBox = i;
+
+		// fill color on the clicked box
+		d3.select("#sortBoxID" + clickedSortByBox)
+			.attr("fill", clickedColor)
+			.style("opacity", opacityClickSortBy);
 
 		var sortBy = d.name;
-		// console.log(sortBy, currSort);
+		
 		if (currSort === sortBy) {
 			// it's the same, no need to resort
 			return;
 		} 
 		currSort = sortBy;
-		// console.log(sortBy); 
+		// sort the data
 		if (sortBy === "Sec ID"){
+			// right now, only secID is sorted in ascending order
 			sortData(sectionData, d.sort, "asec");
 		} else {
 			sortData(sectionData, d.sort);
 		}
-		isFirst = false;
+		// redraw everything starting form the first layer
 		firstLayer();
 	}
 
@@ -334,21 +430,9 @@
 								hr100 : d.HR100,
 								s100 : d.S100
 							}
-							// if (d.party == 100){
-							// 	// republican
-							// 	republicData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
-							// } else if (d.party == 200) {
-							// 	democratData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
-							// } else {
-							// 	noMatchData.push({secID:d.secID, matchNum:d.matchingBills,date: new Date(d.minDate*1000)});
-							// }
 						});
 						// start drawing the visualization
 			 			controlFlow_1();
-			 			
-			 			// d.sort(function(a,b) {
-			 			// 	return a["secID"].localeCompare(b["secID"]);
-			 			// })
 					});
 		} else {
 			// need to clean up
@@ -372,7 +456,7 @@
 
 		function draw_1(rowHeight){
 
-			//the axis
+			//the central axis
  			svg.append("rect")
  				.attr("id", "firstLayerAxis")
  				.attr("width", axisWidth)
@@ -381,6 +465,7 @@
 				.attr("y", 0)
 				.attr("fill", firstLayerCentralAxis);
  			
+ 			// the republican row (right hand side)
  			svg.selectAll("repRow_1")
 				.data(sectionData)
 				.enter()
@@ -393,6 +478,7 @@
 				.attr("y", function(d, i) { return i*rowHeight; })
 				.attr("fill", republicanColor);
 				
+			// the democratic row (left hand side)
 			svg.selectAll("demRow_1")
 				.data(sectionData)
 				.enter()
@@ -404,13 +490,16 @@
 				.attr("x", function(d, i) { return rowMax - Math.min(d["s100"] + d["hr100"], rowMax); })
 				.attr("y", function(d, i) { return i*rowHeight; })
 				.attr("fill", democraticColor);
-
-			// TODO need a window rect or the boarder?
 		}
 
+		/*
+		 * Initialize the second layer
+		 */
 		function toSecondLayer(){
 			secondLayer(sectionData);
 		}
+
+		// end of the first layer
 	}
 	
 	function secondLayer(data){
@@ -428,30 +517,31 @@
 			// calculate the total height
 			totalHeight = data.length * (rectHeight_2 + margin) - margin;
 			draw_2();
-			//console.log(totalHeight);
+			// console.log("totalHeight" + totalHeight);
 			sec.attr("height", totalHeight);
 			windowSize1 = secondLayerHeight / (rectHeight_2 + margin) * rowHeight;
 			windowStart1.domain([0, totalHeight])
 						.range([0, secondLayerHeight]);
-			// console.log(secondLayerHeight, (rectHeight_2 + margin), rowHeight);
-			scrollUp();
-			// TODO: don't support chrome
-			var div = document.getElementById("secLayerDiv").scrollTop;
-			// var chrome = $("#secLayerDiv").height();
-			// console.log(chrome, div);
-			// TODO: need to transition based on the clicked Id
-			windowLayer1(windowStart1(div));
-			windowLayer2();
-			// console.log(div);
+			// the pos is the section box offset at the top of the view
+			var pos = scrollUp();
 			
+			windowLayer1(windowStart1(pos));
+			windowLayer2();
 			if (isFirst) {
+				// go to the third layer if this is the first page load
+				// clickedId should be zero by default
 				toThirdLayer(data[clickedId], clickedId);
+				// done the page load, change the flag
+				isFirst = false; 
 			}
 		}
 
+		/*
+		 * Draw all the small boxes including axis, row for republican 
+		 * and democratic as the text in the second layer
+		 */
     	function draw_2(){
-    		// rect boxes
-			
+    		// republican row (right hand side)
 			sec.selectAll("repRow_2")
 				.data(data)
 				.enter()
@@ -463,13 +553,14 @@
 				.attr("x", rectWidth_2/2)
 				.attr("y", function(d, i) { return rectHeight_2/2 + i*(rectHeight_2+margin); })
 				.transition()
-				.duration(transTime)
+				.duration(transTime + extraDelay)
 				.attr("width", function(d) { return scaleWidth(Math.min(d["s200"] + d["hr200"], rowMax)); })
 				.attr("height", rectHeight_2)
 				.attr("x", function(d, i) { return rectWidth_2 / 2 + axisWidth / 2; })
 				.attr("y", function(d, i) { return i*(rectHeight_2+margin); })
 				.attr("fill", republicanColor);
-				
+			
+			// democratic row (left hand side)
 			sec.selectAll("demRow_2")
 				.data(data)
 				.enter()
@@ -481,7 +572,7 @@
 				.attr("x", rectWidth_2/2)
 				.attr("y", function(d, i) { return rectHeight_2/2 + i*(rectHeight_2+margin); })
 				.transition()
-				.duration(transTime)
+				.duration(transTime + extraDelay)
 				.attr("width", function(d) { return scaleWidth(Math.min(d["s100"] + d["hr100"], rowMax)); })
 				.attr("height", rectHeight_2)
 				.attr("x", function(d, i) { return rectWidth_2 / 2 - axisWidth_2 / 2 - scaleWidth(Math.min(d["s100"] + d["hr100"], rowMax)) ; })
@@ -499,38 +590,30 @@
 				.attr("x", rectWidth_2/2)
 				.attr("y", function(d, i) { return rectHeight_2/2 + i*(rectHeight_2+margin); })
 				.attr("fill", firstLayerCentralAxis)
-				.style("opacity", 0.1)
+				.style("opacity", unClickedOpacitySecLayer)
  				.transition()
-				.duration(transTime)
+				.duration(transTime + extraDelay)
  				.attr("width", axisWidth_2)
 				.attr("height", rectHeight_2)
 				.attr("x", rectWidth_2 / 2 - axisWidth_2 / 2)
 				.attr("y", function(d, i) { return i*(rectHeight_2+margin); })
 				.attr("fill", firstLayerCentralAxis)
 				.style("opacity", 1);
-			// totalHeight += rectHeight_2;
-
 			
+			// show text, either secID, date or match number
 			sec.append("g").selectAll("textGroup")
 				.data(data)
 				.enter()
 				.append("g:text")
 				.attr("id", function(d, i) { return "textId" + i; })
 				.attr("class", "textGroup")
-				// .attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
-				// .attr("y", function(d, i) { return startHeight + Math.floor(i/numRects) *rectSize_1; })
 				.attr("x", rectWidth_2/2)
 				.attr("y", function(d, i) { return (i)*(rectHeight_2+margin) + rectHeight_2/2; })
 				.text(currentSort)
 				.attr("font-size", smallFont)
 				.attr("text-anchor", "middle")
 				.attr("font-family", fontFamily)
-				.style("opacity", 0.1)
-				// .on("click", toThirdLayer)
-				// .on("mouseover", showTip)
-				// .on("mouseleave", hideTip)
-				// .call(scroll)
-				// .on("dblclick.zoom", null)
+				.style("opacity", unClickedOpacitySecLayer)
 				.transition()
 				.duration(transTime)
 				.attr("x", rectWidth_2/2)//function(d, i) { return (rectSize_2/2) + boundary + 2*margin + firstLayerWidth; })
@@ -546,98 +629,152 @@
 				.attr("class", "rectRow_2")
 				.attr("width", 1)
 				.attr("height", 1)
-				// .attr("x", function(d, i) { return margin + (i*rectSize_1 %firstLayerWidth); })
-				// .attr("y", function(d, i) { return startHeight + Math.floor(i/numRects) *rectSize_1; })
 				.attr("x", rectWidth_2/2)
 				.attr("y", function(d, i) { return rectHeight_2/2 + i*(rectHeight_2+margin); })
-				.attr("fill", backgroundColor)
+				.attr("fill", whiteBackgroundColor)
 				.attr("stroke", strokeColor)
-				.style("opacity", 0.1)
-				.on("click", toThirdLayer)
+				.style("opacity", function(d, i) { return i == clickedId ? clickedOpacitySecLayer : unClickedOpacitySecLayer; })
 				.on("mouseover", showTip)
 				.on("mouseleave", hideTip)
-				// .call(scroll)
-				// .on("dblclick.zoom", null)
+				.on("click", toThirdLayer)
 				.transition()
 				.duration(transTime)
 				.attr("width", rectWidth_2)
 				.attr("height", rectHeight_2)
-				.attr("x", 0)//function(d, i) { return boundary + 2*margin + firstLayerWidth; })
+				.attr("x", 0)
 				.attr("y", function(d, i) { return i*(rectHeight_2+margin); })
-				.attr("fill", backgroundColor)
+				.attr("fill", function(d, i) { return i == clickedId ? highlight : whiteBackgroundColor; })
 				.attr("stroke", strokeColor);
-				// .style("opacity", 1);
-
+				// .attr("stroke-width", strokeWidth);
     	}
 
+    	/*
+    	 * Get the correct text detail for the section box
+    	 * @param d the sectionData
+    	 * @return the string text of the section box
+    	 */
     	function currentSort(d) {
     		if (currSort === "SecID"){
     			return d.secID;
     		} else if (currSort === "Date") {
     			var date = d.date;
-    			//console.log("year " + dateFormat(date, "mm-dd-yy"));//date.format("mm-dd-yy"));
     			return (date.getMonth() + 1) + "-" + date.getDate() + "-" + (date.getFullYear() + "").substr(2);
     		} else if (currSort === "Match") {
     			return d.matchNum;
     		} else {
-    			return "null"; // should not happen
+    			return "N/A"; // should not happen
     		}
     	}
 
+    	/*
+    	 * Get the correct color base on the party
+    	 * @param data the sectionData
+    	 * @return the proper color 
+    	 */
     	function rectColor(data) {
     		if (data.party == 100) return democraticColor; 
 			else if (data.party == 200) return republicanColor; 
 			else return noMatchColor;
     	}
 
+    	/*
+    	 * Scroll the clicked box at the top view
+    	 * @return the offset value of the section box
+    	 */
     	function scrollUp(){
-    		var container = document.getElementById("secLayerDiv");
-    		var rowToScrollTo = document.getElementById("rectSecId"+clickedId);
-    		// TODO didn't support chrome
-    		rowToScrollTo.scrollIntoView(true);
-    		// console.log(container.scrollTop, rowToScrollTo, clickedId);
-    		// container.scrollTop = rowToScrollTo.offsetTop;
+    		var clickedSec = $("#rectSecId"+clickedId),
+    			offsetVal = clickedSec.parent().scrollTop() + clickedSec.offset().top - clickedSec.parent().offset().top;
+    		$("#secLayerDiv").animate({
+    			scrollTop: offsetVal
+    		});
+    		return offsetVal;
     	}
 
+    	/*
+    	 * Call back function when mouseover the section box in second layer
+    	 * @param d the sectionData
+    	 * @param i the index of the current data
+    	 */
 		function showTip(d, i){
-			// svg.select(Id+i)
-			// 	.attr("fill", highlight);
+			// highlight the republican row in the first layer
+			svg.select("#repRow_1Id"+i)
+				.attr("fill", highlight);
+			// highlight the democratic row in the first layer
+			svg.select("#demRow_1Id"+i)
+				.attr("fill", highlight);
+			// highlight the rect in the second layer
 			sec.select("#rectSecId"+i)
 				.attr("fill", highlight);
-			//console.log(d.date);
 		}
 
+		/*
+		 * Call back function when mouseleave the section box in the second layer
+		 * @param d the sectionData
+    	 * @param i the index of the current data
+		 */
 		function hideTip(d, i){
-			// svg.select(Id+i)
-			// 	.attr("fill", rectColor);
+			// check if this box has already been highlighted or not
 			if (i != clickedId) {
-				sec.select("#rectSecId"+i)
-					.attr("fill", backgroundColor);
+			// change back the republican row in the first layer	
+			svg.select("#repRow_1Id"+i)
+				.attr("fill", republicanColor);
+			// change back the democratic row in the first layer	
+			svg.select("#demRow_1Id"+i)
+				.attr("fill", democraticColor);
+			// change back the rect in the second layer
+			sec.select("#rectSecId"+i)
+				.attr("fill", whiteBackgroundColor);
 			}
 		}
 		
 		function toThirdLayer(d, i){
+			if (!isFirst && i == clickedId) {
+				// this is the current section box, don't do anything
+				return;
+			}
 			// cancel the previous one
 			d3.select("#rectSecId" + clickedId)
-				.attr("stroke-width", 1)
-				.attr("fill", backgroundColor)
-				.style("opacity", 0.1);
+				.attr("fill", whiteBackgroundColor)
+				.style("opacity", unClickedOpacitySecLayer);
 
+			d3.select("#repRow_1Id" + clickedId)
+				.attr("fill", republicanColor);
+
+			d3.select("#demRow_1Id" + clickedId)
+				.attr("fill", democraticColor);
+
+			// update the clicked id
 			clickedId = i;
+
+			var yPosition = d3.select("#rectSecId"+clickedId)[0][0].y.animVal.value;
+			if (isFirst) {
+				// edge case for the first load.
+				// need to adjust the position
+				yPosition = 0;
+			}
+			// add a loading picture
+			sec.append("g:image")
+				.attr("id", "loadingImageId")
+				.attr("xlink:href", "./image/loading.gif")
+				.attr("width", rectHeight_2)
+				.attr("height", rectHeight_2)
+				.attr("x", rectHeight_2/2)
+				.attr("y", yPosition);
 
 			// change the clicked one
 			d3.select("#rectSecId" + clickedId)
-				.attr("stroke-width", strokeWidth)
-				.style("opacity", 0.5);
+				// .attr("stroke-width", strokeWidth)
+				.style("opacity", clickedOpacitySecLayer);
 
 			var div = document.getElementById("secLayerDiv").scrollTop;
 			thirdLayerPointer(div);
 
-			console.log("sec id: " + d.secID, clickedId);
+			console.log("sec id: " + d.secID, "Clicked id: " + clickedId);
 			thirdLayer(d.secID);
 		}
 
 		controlFlow_2();
+		// end of second layer
 	}
 
 	// the window between first and second layer
@@ -671,14 +808,36 @@
 			.attr("stroke-width", 1);*/
 		
 		win1.append("g:rect")
+			.attr("id", "top_box_1Id")
+			.attr("x", -firstLayerWidth)
+			.attr("y", 0)
+			.attr("width", firstLayerWidth)
+			.attr("height", yPos)
+			.attr("fill", darkbackground)
+			.attr("opacity", backgroundOpacity)
+			.on("click", function() { changeFirstLayerWindow(d3.mouse(this)[1]); });
+
+		win1.append("g:rect")
 			.attr("id", "box_1Id")
 			.attr("x", -firstLayerWidth)
 			.attr("y", yPos)
 			.attr("width", firstLayerWidth)
 			.attr("height", windowSize1)
-			.attr("fill", "none")
+			.attr("fill", "white")
 			.attr("stroke", strokeColor)
-			.attr("stroke-width", strokeWidth);
+			.attr("stroke-width", 0)
+			.style("opacity", 0.1)
+			.call(drag);
+
+		win1.append("g:rect")
+			.attr("id", "buttom_box_1Id")
+			.attr("x", -firstLayerWidth)
+			.attr("y", yPos + windowSize1)
+			.attr("width", firstLayerWidth)
+			.attr("height", firstLayerHeight - yPos - windowSize1)
+			.attr("fill", darkbackground)
+			.attr("opacity", backgroundOpacity)
+			.on("click", function() { changeFirstLayerWindow(d3.mouse(this)[1]); });
 	}
 
 	function windowLayer2(){
@@ -721,6 +880,7 @@
 					.style("font-family", sectionFontFamily)
 					.style("font-size", sectionFontSize)
 					.html(data.sectionText)
+				d3.select("#loadingImageId").remove();
 			});
 		
 		//TODO: still need to add axis labels
@@ -1020,6 +1180,8 @@
 		win1.select("#upperLine_1Id").remove();
 		win1.select("#lowerLine_1Id").remove();
 		win1.select("#box_1Id").remove();
+		win1.select("#top_box_1Id").remove();
+		win1.select("#buttom_box_1Id").remove();
 	}
 
 	function cleanSecondLayer(){
@@ -1039,8 +1201,8 @@
 	function cleanThirdLayer(){
 		comp.select("#alignChart").remove();
 		textDiv.select("pre").remove();
-		billInfoDiv.style("background-color", backgroundColor);
-		billTextDiv.style("background-color", backgroundColor);
+		billInfoDiv.style("background-color", whiteBackgroundColor);
+		billTextDiv.style("background-color", whiteBackgroundColor);
 		cleanBillInfo();
 	}
 
