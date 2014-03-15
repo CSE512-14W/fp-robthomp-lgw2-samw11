@@ -121,16 +121,26 @@
 
 	var sec = d3.select("body")
 					.append("div")
-					.attr("id", "secLayerDiv")
+					.attr("id", "secLayerDivOutter")
 					.style({
 						"position": "absolute", 
 						"top": (headerHeight + margin) + "px", 
 						"left": (2*margin + firstLayerWidth) + "px",
 						"height": secondLayerHeight + "px",
 						"width": (secondLayerWidth + margin) + "px",
-						"overflow": "scroll"})
+						"overflow": "hidden"})
+					.append("div")
+					.attr("id", "secLayerDiv")
+					.style({
+						"position": "absolute", 
+						// "top": (headerHeight + margin) + "px", 
+						"left": (2*margin + firstLayerWidth) + "px",
+						"height": secondLayerHeight + "px",
+						"width": (secondLayerWidth + 2*margin) + "px",
+						"overflow": "auto"})
 					.append("svg:svg")
-					.attr("width", secondLayerWidth);
+					.attr("width", secondLayerWidth)
+					.style("overflow", "auto");
 
 	var win1 = d3.select("svg")
 				.append("g")

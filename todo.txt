@@ -27,6 +27,7 @@ Done:
 	Make layer 1 overlay window draggable, also able to click the shallow area and move to the clicked position
 	Have layer 2 overlay scroll arrow "squash" when user scrolls selection offscreen
 	Add some loading indicator on button when waiting on layer 3 (pulsing border width)
+	Hide the scroll bar on the second layer
 
 Follow up:
 	make sort button size better (I am not sure is this size "better", it seems fine for me)
