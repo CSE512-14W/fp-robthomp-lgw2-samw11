@@ -7,7 +7,7 @@ fp-robthomp-lgw2-samw11
 2. Lucy Williams, lgw2@uw
 3. Sam Wilson, samw11@cs
 
-  Project Name
+Project Name
 ===============
 
 ![Overview](overview.png)
