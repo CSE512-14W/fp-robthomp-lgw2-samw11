@@ -134,7 +134,7 @@
 					.style({
 						"position": "absolute", 
 						// "top": (headerHeight + margin) + "px", 
-						"left": (2*margin + firstLayerWidth) + "px",
+						// "left": (2*margin + firstLayerWidth) + "px",
 						"height": secondLayerHeight + "px",
 						"width": (secondLayerWidth + 2*margin) + "px",
 						"overflow": "auto"})
