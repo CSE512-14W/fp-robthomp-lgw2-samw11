@@ -140,7 +140,7 @@ if (!isset($_GET["section"])) {
 	file_put_contents($outFileName, json_encode($out));
 } else {
 	$query = "
-		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.textA as baseText, comp.textB as otherText, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText
+		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.textA as baseText, comp.textB as otherText, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText, bills.PLaw, comp.idB as matchingSectionID
 			FROM bills_sectcomp as comp, bills_sections as sec, bills, bills_secttext as tex
 			WHERE comp.idA = " . $_GET["section"] . " 
 				AND sec.Bill_id = bills.id 
@@ -189,11 +189,13 @@ if (!isset($_GET["section"])) {
 		$arr["BillType"] = $row["BillType"];
 		$arr["NameFull"] = $row["NameFull"];
 		$arr["Postal"] = $row["Postal"];
+		$arr["PLaw"] = $row["PLaw"];
+		$arr["matchingSectionID"] = $arr["matchingSectionID"];
 		$rows[] = $arr;
 	}
 
 	$query = "
-		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.textB as baseText, comp.textA as otherText, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText 
+		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.textB as baseText, comp.textA as otherText, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText, bills.PLaw, comp.idA as matchingSectionID
 			FROM bills_sectcomp as comp, bills_sections as sec, bills, bills_secttext as tex
 			WHERE comp.idB = " . $_GET["section"] . " 
 				AND sec.Bill_id = bills.id 
@@ -228,6 +230,8 @@ if (!isset($_GET["section"])) {
 		$arr["BillType"] = $row["BillType"];
 		$arr["NameFull"] = $row["NameFull"];
 		$arr["Postal"] = $row["Postal"];
+		$arr["PLaw"] = $row["PLaw"];
+		$arr["matchingSectionID"] = $arr["matchingSectionID"];
 		$rows[] = $arr;
 	}
 

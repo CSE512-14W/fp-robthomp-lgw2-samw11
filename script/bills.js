@@ -1,32 +1,6 @@
 (function() {
 	/*
-		Core TODO:
-			"Mark as boilerplate" button somewhere
-			Add description text on top right
 		
-		Style TODO:
-			Title: 
-				decide on title text, size and font
-			Sort Buttons: 
-				add mouseover
-				make size better
-				add background color
-			Layer 1: 
-				Highlight row currently shown in layer 3
-				Draw window over current scroll region from region 2
-					Make window draggable
-			Layer 2:
-				Have scroll arrow "squash" when user scrolls selection offscreen
-				Hide/Custom scroll bar?
-				Add some loading indicator on button when waiting on layer 3
-			Alignment Chart:
-				Add label on vertical axis
-				Add texture to show house or senate bill type
-			Section Text:
-				Hide/Custom scroll bar?
-			Matching Bill Info:
-				strip time from date row
-				show if bill became law or not
 	*/
 	
 	var titleText = "How a bill becomes a law";
@@ -166,20 +140,27 @@
 					.style({
 						"position": "absolute", 
 						"top": (headerHeight + alignChartHeight + margin*2) + "px", 
-						"left": (firstLayerWidth + secondLayerWidth + margin*3) + "px",
+						"left": (firstLayerWidth + secondLayerWidth + textDivWidth + margin*3) + "px",
 						"height": (height - headerHeight - alignChartHeight - 2*margin) + "px",
 						"width": textDivWidth + "px",
+						"background-color": otherBillBackground,
 						"overflow": "scroll"});
+	
+	textDiv.append("h2")
+		.text("Obamacare Section");
 	
 	var billTextDiv = d3.select("body")
 					.append("div")
 					.style({
 						"position": "absolute", 
 						"top": (headerHeight + alignChartHeight + margin*2) + "px", 
-						"left": (firstLayerWidth + secondLayerWidth + margin*3 + textDivWidth + margin) + "px",
+						"left": (firstLayerWidth + secondLayerWidth + margin*2 + margin) + "px",
 						"height": (height - headerHeight - alignChartHeight - 2*margin) + "px",
 						"width": textDivWidth + "px",
 						"overflow": "scroll"});
+	
+	billTextDiv.append("h2")
+		.text("Earlier Bill Matching Section");
 	
 	var billInfoDiv = d3.select("body")
 						.append("div")
@@ -190,7 +171,6 @@
 							"height": alignChartHeight + margin + "px",
 							"width": billInfoDivWidth + "px",
 							"font-family": fontFamily,
-							"background-color": otherBillBackground,
 							"overflow": "scroll"});
 
 	// sort data by match number and than by section id
@@ -979,6 +959,9 @@
 
 	function writeBillInfo(d) {
 		
+		billInfoDiv.style("background-color", partyColor(d.Party));
+		billTextDiv.style("background-color", partyColor(d.Party));
+		
 		billInfoDiv.append("h1")
 			.attr("class", "BillInfo")
 			.text(d.BillType + d.BillNum)
@@ -987,17 +970,24 @@
 		
 		billInfoDiv.append("p")
 			.attr("class", "BillInfo")
-			.text("Introduced " + date.getMonth() + "/" + date.getDate() + "/" + date.getFullYear());
+			.text("Introduced: " + (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear());
 		
 		billInfoDiv.append("p")
 			.attr("class", "BillInfo")
-			.text("Author: " + d.NameFull + " (" + d.Postal + ")");
+			.text("Sponsor: " + d.NameFull + " (" + d.Postal + ")");
 		
-		var parties = {"100": "Democrat", "200": "Republican"};
+		var parties = {"100": "Democrat", "200": "Republican", "328": "Independent"};
+		var groups  = {"S": "Senate", "H": "House"};
 		
 		billInfoDiv.append("p")
 			.attr("class", "BillInfo")
 			.text("Party: " + parties[d.Party]);
+		
+		billInfoDiv.append("p")
+			.attr("class", "BillInfo")
+			.text("Became Law: " + (d.PLaw == "0" ? "No" : "Yes"));
+		
+		billTextDiv.select("h2").text(groups[d.BillType] + " Bill " + d.BillNum + " - Section " + d.matchingtSectionID);
 		
 		billInfoDiv.append("p")
 			.attr("class", "BillInfo")

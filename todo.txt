@@ -1,0 +1,18 @@
+Core TODO:
+	"Mark as _" buttons - R
+	Add description text on top right - L
+	Add title to alignment chart - R
+	Add "Start/End of Text" to alignment chart axis - R
+	Don't show axis labels for no match sections - R
+	Autoscrolling on texts - R
+	add sort button mouseover - S
+	make sort button size better - S
+	add sort button background color - S
+	Make layer 1 overlay window draggable - S
+	Have layer 2 overlay scroll arrow "squash" when user scrolls selection offscreen - S
+	Add some loading indicator on button when waiting on layer 3 (pulsing border width)- S
+	Add texture to show house or senate bill type - R
+	Change null to Unknown in Sponsor field - R
+	Get matching section ID working - R
+	Make background colors less harsh - R
+	SHow mismatches in different highlight - R
