@@ -1,4 +1,5 @@
 Core TODO:
+	Fix null date bug - S
 	"Mark as _" buttons - R
 	Add description text on top right - L
 	Add title to alignment chart - R
@@ -15,7 +16,7 @@ Core TODO:
 	Change null to Unknown in Sponsor field - R
 	Get matching section ID working - R
 	Make background colors less harsh - R
-	SHow mismatches in different highlight - R
+	Show mismatches in different highlight - R
 
 
 Done:

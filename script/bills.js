@@ -4,19 +4,19 @@
 	*/
 	
 	var titleText = "How a bill becomes a law";
+	var billNameShort = "PPACA";
 	// frame variables
     var height = 720,
 		width = 1080,
 		margin = 20,
 		titleHeight = 40,
-		
 		headerHeight = 70,
 		bodyMargin = 6;
 
 	// color 
 	var layerOneBackgroundColor = d3.rgb(200,200,200), // didn't use
-		republicanColor = "#fda4a7",//"#95474c",
-		democraticColor = "#99c0e5",//"#396283",
+		republicanColor = "#fda4a7",
+		democraticColor = "#99c0e5",
 		independentColor = "gray",
 		noMatchColor = "grey",
 		firstLayerCentralAxis = "grey",
@@ -27,7 +27,8 @@
 		highlightColor = "#ffffbb",
 		layerThreeBackgroundColor = d3.rgb(200,200,200),
 		otherBillBackground = "#eeeeee"
-		clickedColor = "yellow";
+		clickedColor = "yellow",
+		mismatchColor = "orange";
 
 	// data in json format		
 	var sectionData = [];
@@ -94,10 +95,11 @@
 		alignChartHeight = (height - 2*margin) / 3,
 		alignChartPadding = 10,
 		billInfoDivWidth = 360,
-		textDivWidth = (alignChartWidth + billInfoDivWidth + margin)/2,
+		textDivWidth = (alignChartWidth + billInfoDivWidth + margin)/2 + 5,
 		xPosition = firstLayerWidth + secondLayerWidth + boundary*2 + 2*margin,
 		sectionFontFamily = "",
-		sectionFontSize = "11px";
+		sectionFontSize = "11px",
+		assignmentHeight = 40;
 
 	// transition time
 	var transTime = 1000,
@@ -163,40 +165,57 @@
 
 	var textDiv = d3.select("body")
 					.append("div")
+					.attr("id", "baseBillTextDiv")
 					.style({
 						"position": "absolute", 
 						"top": (headerHeight + alignChartHeight + margin*2) + "px", 
-						"left": (firstLayerWidth + secondLayerWidth + textDivWidth + margin*3) + "px",
+						"left": (firstLayerWidth + secondLayerWidth + textDivWidth + margin*3 + 10) + "px",
 						"height": (height - headerHeight - alignChartHeight - 2*margin) + "px",
 						"width": textDivWidth + "px",
 						"background-color": otherBillBackground,
+						"padding": "5px",
 						"overflow": "scroll"});
 	
 	textDiv.append("h2")
-		.text("Obamacare Section");
+		.text(billNameShort + " Section");
 	
 	var billTextDiv = d3.select("body")
 					.append("div")
+					.attr("id", "matchingBillTextDiv")
 					.style({
 						"position": "absolute", 
 						"top": (headerHeight + alignChartHeight + margin*2) + "px", 
 						"left": (firstLayerWidth + secondLayerWidth + margin*2 + margin) + "px",
-						"height": (height - headerHeight - alignChartHeight - 2*margin) + "px",
+						"height": (height - headerHeight - alignChartHeight - 2*margin - assignmentHeight) + "px",
 						"width": textDivWidth + "px",
+						"padding": "5px",
 						"overflow": "scroll"});
 	
+	var assignment = d3.select("body")
+					.append("div")
+					.style({
+						"position": "absolute", 
+						"top": (height - assignmentHeight + 15) + "px", 
+						"left": (firstLayerWidth + secondLayerWidth + margin*3) + "px",
+						"height": assignmentHeight + "px",
+						//"display": "none",
+						"width": textDivWidth + "px"});
+	
+	assignment.html("Label this Comparison: <input id='field' type='text'><input id='submit' type='submit'>");
+	
 	billTextDiv.append("h2")
-		.text("Earlier Bill Matching Section");
+		.text("Matching Bill Section");
 	
 	var billInfoDiv = d3.select("body")
 						.append("div")
 						.style({
 							"position": "absolute", 
-							"top": (headerHeight + margin) + "px", 
+							"top": (headerHeight + margin/2) + "px", 
 							"left": (firstLayerWidth + secondLayerWidth + margin*5 + alignChartWidth) + "px",
 							"height": alignChartHeight + margin + "px",
 							"width": billInfoDivWidth + "px",
 							"font-family": fontFamily,
+							"padding": "5px",
 							"overflow": "scroll"});
 
 	var drag = d3.behavior.drag()
@@ -276,6 +295,12 @@
 		d3.select("#buttom_box_1Id")
 						.attr("y", position + windowSize1)
 						.attr("height", firstLayerHeight - position - windowSize1);
+		
+		d3.select("#upperTri_1Id")
+			.attr("d", "M0,0 L" + margin + ",0 L0," + position + "z");
+		
+		d3.select("#lowerTri_1Id")
+			.attr("d", "M0," + (position + windowSize1) + " L" + margin + "," + secondLayerHeight + " L0," + secondLayerHeight + "z")
 
 	}
 
@@ -419,7 +444,7 @@
 		} else {
 			sortData(sectionData, d.sort);
 		}
-		// redraw everything starting form the first layer
+		// redraw everything starting from the first layer
 		firstLayer();
 	}
 
@@ -800,6 +825,18 @@
 			.attr("y2", 0)
 			.attr("stroke", strokeColor)
 			.attr("stroke-width", strokeWidth);
+		
+		win1.append("g:path")
+			.attr("id", "upperTri_1Id")
+			.attr("d", "M0,0 L" + margin + ",0 L0," + yPos + "z")
+			.attr("opacity", backgroundOpacity)
+			.attr("fill", darkbackground);
+		
+		win1.append("g:path")
+			.attr("id", "lowerTri_1Id")
+			.attr("d", "M0," + (yPos + windowSize1) + " L" + margin + "," + secondLayerHeight + " L0," + secondLayerHeight + "z")
+			.attr("opacity", backgroundOpacity)
+			.attr("fill", darkbackground);
 
 			// console.log("window size", windowSize1);
 		win1.append("g:line")
@@ -810,12 +847,6 @@
 			.attr("y2", secondLayerHeight)
 			.attr("stroke", strokeColor)
 			.attr("stroke-width", strokeWidth);
-		
-		/*win1.append("g:path")
-			.attr("id", "lowerLine_1Id")
-			.attr("d", "M" + 0 + "," + (yPos + windowSize1) + "C" + (margin/3) + "," + (yPos + windowSize1 + (secondLayerHeight - yPos - windowSize1)/5) + " " + (2*margin/3) + "," + (yPos + windowSize1 + 1*(secondLayerHeight - yPos - windowSize1)/5) + " " + (margin) + "," + (secondLayerHeight))
-			.attr("stroke", strokeColor)
-			.attr("stroke-width", 1);*/
 		
 		win1.append("g:rect")
 			.attr("id", "top_box_1Id")
@@ -872,7 +903,7 @@
 	}
 
 	function thirdLayer(secID){
-		
+		cleanThirdLayer();
 		
 		$.getJSON( "data/data.php", { section: secID} )
 			.done(function( data ) {
@@ -880,16 +911,15 @@
 				base = data.sectionText;
 				processThirdLayerData(data);
 				
-				cleanThirdLayer();
-				
-				
-				
-				
 				drawAlignChart(data);
 				textDiv.append("pre")
 					.style("font-family", sectionFontFamily)
 					.style("font-size", sectionFontSize)
 					.html(data.sectionText)
+				
+				textDiv.select("h2")
+					.text("PPACA - Section " + secID);
+				
 				d3.select("#loadingImageId").remove();
 			});
 		
@@ -950,40 +980,43 @@
 					.attr("y", function(d) { return lengthScale(d.docAstart); })
 					.attr("height", function(d) { return lengthScale(d.docAend) - lengthScale(d.docAstart);})
 					.attr("width", markWidth)
-					.attr("stroke", "black")
-					.attr("stroke-width", 1)
-					//.attr("opacity", .5)
-					.attr("fill", function(d) { return partyColor(d.Party); })
+					.attr("stroke", function(d) { return partyColor(d.Party); })
+					.attr("stroke-width", 2)
+					.attr("fill", function(d) { return d.BillType == "S" ? partyColor(d.Party) : "none" })
+					.attr("background-image", 'image/dem.png')
 					.on("mouseover", function(d,i) { 
 						d3.select(this)
-							.attr("stroke-width", 2)
-							.attr("fill", highlightColor);
+							.attr("fill", highlightColor)
+							.attr("stroke", highlightColor);
 					})
 					.on("mouseout", function(d,i) { 
 						if (i != selectedInd) {
 							d3.select(this)
-								.attr("stroke-width", 1)
-								.attr("fill", function() { return partyColor(d.Party); });
+								.attr("fill", function(d) { return d.BillType == "S" ? partyColor(d.Party) : "none" ; })
+								.attr("stroke", function(d) { return partyColor(d.Party); });
 						}
 					})
+					
 					.on("click", function(d,i) { 
-						var highlight = data.sectionText;
-						highlight = highlight.slice(0,d.docAstart) + "<span style='background-color: " + highlightColor + "'>" + highlight.slice(d.docAstart,d.docAend) + "</span>" + highlight.slice(d.docAend);
-						
-						billInfoDiv.style("background-color", otherBillBackground);
-						billTextDiv.style("background-color", otherBillBackground);
-						
-						d3.select("#alignment" + selectedInd)
-							.attr("stroke-width", 1)
-							.attr("fill", function() { return partyColor(data.matches[selectedInd].Party); });
-		
-						selectedInd = i;
-						
-						textDiv.select("pre")
-							.html(highlight);
-								
 						cleanBillInfo();
-						writeBillInfo(d);
+						if (data.matches[selectedInd]) {
+							d3.select("#alignment" + selectedInd)
+								.attr("stroke-width", 1)
+								.attr("stroke", partyColor(data.matches[selectedInd].Party))
+								.attr("fill", data.matches[selectedInd].BillType == "S" ? partyColor(data.matches[selectedInd].Party) : whiteBackgroundColor);
+						}
+					
+						selectedInd = i;
+							
+						assignment.style("display", "block");
+						assignment.select("#submit")
+							.on("click", function() {
+								$.getJSON( "data/assign.php", { comp: d.compID, label: d3.select("#field")[0][0].value } );
+								d3.select("#field")[0][0].value = "";
+							});	
+								
+						
+						writeBillInfo(d, data.sectionText);
 					})
 					.transition()
 						.delay(2*transTime)
@@ -1000,6 +1033,12 @@
 			var lastBar = 0;
 			
 			if (data.matches.length > 0) {
+				chart.append("text")
+					.attr("x", 2)
+					.attr("y", -3)
+					.attr("font-size", 12)
+					.text("Section Matches")
+				
 				//add bars between alignments that separates them by quarters of the year
 				for (var i = 0; i < data.matches.length; i++) {
 					var date = new Date(data.matches[i].IntrDate * 1000);
@@ -1053,9 +1092,9 @@
 					.attr("text-anchor", "middle")
 					.attr("font-size", 8)
 					.text((curYear + 1900));
-			}
-			
-			chart.append("path")
+					
+				
+				chart.append("path")
 				.attr("d", "M0," + lengthScale(minStart) + " L" + alignChartWidth + "," + lengthScale(minStart))
 				.attr("stroke-width", 1)
 				.attr("stroke", "black")
@@ -1064,18 +1103,15 @@
 					.duration(transTime)
 					.attr("d", "M0," + adjustedLengthScale(minStart) + " L" + alignChartWidth + "," + adjustedLengthScale(minStart));
 					
-			if (data.matches.length > 0) {
 				chart.append("text")
 					.attr("x", alignChartWidth + 5)
 					.attr("y", lengthScale(minStart) + textHeight/2)
-					.text(Math.round(minStart/data.sectionText.length * 100) + "%")
+					.text("Start")
 					.transition()
 						.delay(2*transTime)
 						.duration(transTime)
 						.attr("y", adjustedLengthScale(minStart) + textHeight/2);
-			}
 			
-			//if (maxEnd < data.sectionText.length) {
 				chart.append("path")
 					.attr("d", "M0," + lengthScale(maxEnd) + " L" + alignChartWidth + "," + lengthScale(maxEnd))
 					.attr("stroke-width", 2)
@@ -1085,18 +1121,16 @@
 						.delay(2*transTime)
 						.duration(transTime)
 						.attr("d", "M0," + adjustedLengthScale(maxEnd) + " L" + alignChartWidth + "," + adjustedLengthScale(maxEnd));
-						
+					
 				chart.append("text")
 					.attr("x", alignChartWidth + 5)
 					.attr("y", lengthScale(maxEnd) + textHeight/2)
-					.text(Math.round(maxEnd/data.sectionText.length * 100) + "%")
+					.text("End")
 					.transition()
 						.delay(2*transTime)
 						.duration(transTime)
 						.attr("y", adjustedLengthScale(maxEnd) + textHeight/2);
-			//}
-			
-			if (data.matches.length == 0) {
+			} else {
 				chart.append("text")
 					.attr("x", alignChartWidth/2)
 					.attr("y", alignChartHeight/2)
@@ -1127,7 +1161,19 @@
 		}
 	}
 
-	function writeBillInfo(d) {
+	function writeBillInfo(d, baseText) {
+		
+		
+		
+		var highlightString = makeHighlightHTML(baseText, d.docAstart, d.docAend, d.textA, d.textB);
+		
+		var highlight = baseText;
+		highlight = highlight.slice(0,d.docAstart) + "<span style='background-color: " + highlightColor + "'>" + /*highlight.slice(d.docAstart,d.docAend)*/highlightString + "</span>" + highlight.slice(d.docAend);
+		
+		textDiv.select("pre")
+			.html(highlight);
+		
+		$("#baseBillTextDiv").scrollTop($("#baseBillTextDiv pre").height() * d.docAstart/baseText.length + 68);
 		
 		billInfoDiv.style("background-color", partyColor(d.Party));
 		billTextDiv.style("background-color", partyColor(d.Party));
@@ -1144,10 +1190,10 @@
 		
 		billInfoDiv.append("p")
 			.attr("class", "BillInfo")
-			.text("Sponsor: " + d.NameFull + " (" + d.Postal + ")");
+			.text("Sponsor: " + (d.NameFull ? (d.NameFull + " (" + d.Postal + ")") : "Unknown"));
 		
 		var parties = {"100": "Democrat", "200": "Republican", "328": "Independent"};
-		var groups  = {"S": "Senate", "H": "House"};
+		var groups  = {"S": "Senate", "HR": "House"};
 		
 		billInfoDiv.append("p")
 			.attr("class", "BillInfo")
@@ -1157,7 +1203,7 @@
 			.attr("class", "BillInfo")
 			.text("Became Law: " + (d.PLaw == "0" ? "No" : "Yes"));
 		
-		billTextDiv.select("h2").text(groups[d.BillType] + " Bill " + d.BillNum + " - Section " + d.matchingtSectionID);
+		billTextDiv.select("h2").text(groups[d.BillType] + " Bill " + d.BillNum + " - Section " + d.matchingSectionID);
 		
 		billInfoDiv.append("p")
 			.attr("class", "BillInfo")
@@ -1165,19 +1211,26 @@
 				.attr("href", d.URL)
 				.text("Full Text");
 		
+		var highlightString = makeHighlightHTML(d.matchText, d.docBstart, d.docBend, d.textB, d.textA);
 		var highlight = d.matchText;
-		highlight = highlight.slice(0,d.docBstart) + "<span style='background-color: " + highlightColor + "'>" + highlight.slice(d.docBstart,d.docBend) + "</span>" + highlight.slice(d.docBend);
+		highlight = highlight.slice(0,d.docBstart) + "<span style='background-color: " + highlightColor + "'>" + /*highlight.slice(d.docBstart,d.docBend)*/highlightString + "</span>" + highlight.slice(d.docBend);
 		
 		billTextDiv.append("pre")
 				.attr("class", "billText")
 				.style("font-family", sectionFontFamily)
 				.style("font-size", sectionFontSize)
 				.html(highlight);
+		
+		$("#matchingBillTextDiv").scrollTop($("#matchingBillTextDiv pre").height() * d.docBstart/d.matchText.length + 68);
 	}
 	
 	function cleanBillInfo() {
 		billTextDiv.select(".billText").remove();
 		billInfoDiv.selectAll(".BillInfo").remove();
+		
+		assignment.style("display", "none");
+		assignment.select("#submit")
+			.on("click", null);
 	}
 	
 	function cleanFirstLayer(){
@@ -1191,6 +1244,8 @@
 		win1.select("#lowerLine_1Id").remove();
 		win1.select("#box_1Id").remove();
 		win1.select("#top_box_1Id").remove();
+		win1.select("#upperTri_1Id").remove();
+		win1.select("#lowerTri_1Id").remove();
 		win1.select("#buttom_box_1Id").remove();
 	}
 
@@ -1211,8 +1266,12 @@
 	function cleanThirdLayer(){
 		comp.select("#alignChart").remove();
 		textDiv.select("pre").remove();
+		textDiv.select("h2")
+			.text("");
 		billInfoDiv.style("background-color", whiteBackgroundColor);
 		billTextDiv.style("background-color", whiteBackgroundColor);
+		billTextDiv.select("h2")
+			.text("Matching Bill Section");
 		cleanBillInfo();
 	}
 
@@ -1257,6 +1316,49 @@
 			var end = start + t.match(matchExp)[0].length;
 			return [start, end];
 		}
+	}
+	
+	function makeHighlightHTML(baseText, docAstart, docAend, textA, textB) {
+		var highlightString = "";
+		
+		var t = baseText.replace(/<DELETED>/g, "         ");
+		t = t.replace(/<\/DELETED>/g, "          ");
+		t = t.replace(/[\W|_]/g," ");
+		t = t.toLowerCase();
+		
+		var lastMismatched = false;
+		var mInd = textA.length - 1;
+		var bInd = docAend - 1;
+		while (mInd >= 0 && bInd >= docAstart) {
+			//skip gaps in the textA match
+			if (textA[mInd] == '-') {
+				mInd--;
+			//skip extra characters in the original text (likely stripped out punctuation)
+			} else if (textA[mInd] != t[bInd]) {
+				highlightString = baseText[bInd] + highlightString;
+				bInd--;
+			//we got a mismatch
+			} else if (textB[mInd] == '-' || textA[mInd] != textB[mInd]) {
+				if (!lastMismatched) {
+					highlightString = "</span>" + highlightString;
+				}
+				highlightString = baseText[bInd] + highlightString;
+				mInd--;
+				bInd--;
+				lastMismatched = true;
+			//the characters matched
+			} else {
+				if (lastMismatched) {
+					highlightString = "<span style='background-color: " + mismatchColor + "'>" + highlightString;
+				}
+				highlightString = baseText[bInd] + highlightString;
+				mInd--;
+				bInd--;
+				lastMismatched = false;
+			}
+		}
+		
+		return highlightString;
 	}
 	sortButton();
 	firstLayer();
