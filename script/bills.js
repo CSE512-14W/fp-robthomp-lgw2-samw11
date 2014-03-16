@@ -971,7 +971,7 @@
 				.attr("fill", "black");
 			
 			var markMaxWidth = 10;
-			var markMargin = 8;
+			var markMargin = 4;
 			var markWidth = Math.min(markMaxWidth, (alignChartWidth - markMargin)/data.matches.length - markMargin);
 		
 			chart.selectAll("alignments")
