@@ -72,7 +72,6 @@
 		rectWidth_2 = secondLayerWidth * 0.9,
 		rectHeight_2 = rectWidth_2 / 2;
 		boundary = secondLayerWidth * 0.4;
-		xPos = 0,
 		smallFont = 0,
 		totalHeight = 0,
 		axisWidth_2 = axisWidth * 2,
@@ -81,7 +80,7 @@
 		// dem and rep bar width
 		scaleWidth = d3.scale.linear()
 						.domain([0, rowMax])
-						.range([0, rectWidth_2/2-axisWidth_2/2]);
+						.range([0, rectWidth_2/2-axisWidth_2/2]),
 		// x position for rep
 		xPos = d3.scale.linear()
 					.domain([0, rowMax])
@@ -112,7 +111,6 @@
 		.attr("height", height);
 
 	var titleRegion = d3.select("svg");
-
 
 	var svg = d3.select("svg")
 				.append("g")
@@ -280,11 +278,11 @@
 		 $("#secLayerDiv").scrollTop(offsetVal);
 		thirdLayerPointer(offsetVal);
 		// move the window between 1 and 2 layer
-		d3.select("#upperLine_1Id")
-							.attr("y1", position);
+		// d3.select("#upperLine_1Id")
+		// 					.attr("y1", position);
 
-		d3.select("#lowerLine_1Id")
-						.attr("y1", position + windowSize1);
+		// d3.select("#lowerLine_1Id")
+		// 				.attr("y1", position + windowSize1);
 		
 		d3.select("#box_1Id")
 						.attr("y", position);
@@ -821,14 +819,14 @@
 		// windowStart1 ;
 		// draw 2 lines
 		// console.log("ypos", yPos);
-		win1.append("g:line")
-			.attr("id", "upperLine_1Id")
-			.attr("x1", 0)
-			.attr("y1", yPos)
-			.attr("x2", margin)
-			.attr("y2", 0)
-			.attr("stroke", strokeColor)
-			.attr("stroke-width", strokeWidth);
+		// win1.append("g:line")
+		// 	.attr("id", "upperLine_1Id")
+		// 	.attr("x1", 0)
+		// 	.attr("y1", yPos)
+		// 	.attr("x2", margin)
+		// 	.attr("y2", 0)
+		// 	.attr("stroke", strokeColor)
+		// 	.attr("stroke-width", strokeWidth);
 		
 		win1.append("g:path")
 			.attr("id", "upperTri_1Id")
@@ -843,14 +841,14 @@
 			.attr("fill", darkbackground);
 
 			// console.log("window size", windowSize1);
-		win1.append("g:line")
-			.attr("id", "lowerLine_1Id")
-			.attr("x1", 0)
-			.attr("y1", yPos + windowSize1)
-			.attr("x2", margin)
-			.attr("y2", secondLayerHeight)
-			.attr("stroke", strokeColor)
-			.attr("stroke-width", strokeWidth);
+		// win1.append("g:line")
+		// 	.attr("id", "lowerLine_1Id")
+		// 	.attr("x1", 0)
+		// 	.attr("y1", yPos + windowSize1)
+		// 	.attr("x2", margin)
+		// 	.attr("y2", secondLayerHeight)
+		// 	.attr("stroke", strokeColor)
+		// 	.attr("stroke-width", strokeWidth);
 		
 		win1.append("g:rect")
 			.attr("id", "top_box_1Id")
@@ -1245,8 +1243,8 @@
 	}
 
 	function cleanWindow1Layer(){
-		win1.select("#upperLine_1Id").remove();
-		win1.select("#lowerLine_1Id").remove();
+		// win1.select("#upperLine_1Id").remove();
+		// win1.select("#lowerLine_1Id").remove();
 		win1.select("#box_1Id").remove();
 		win1.select("#top_box_1Id").remove();
 		win1.select("#upperTri_1Id").remove();
