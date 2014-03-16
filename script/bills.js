@@ -1213,6 +1213,7 @@
 			.attr("class", "BillInfo")
 			.append("a")
 				.attr("href", d.URL)
+				.attr("target", "_blank")
 				.text("Full Text");
 		
 		var highlightString = makeHighlightHTML(d.matchText, d.docBstart, d.docBend, d.textB, d.textA);
