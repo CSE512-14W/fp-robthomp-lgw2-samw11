@@ -653,7 +653,7 @@
 				.duration(transTime)
 				.attr("x", rectWidth_2/2)//function(d, i) { return (rectSize_2/2) + boundary + 2*margin + firstLayerWidth; })
 				.attr("y", function(d, i) { return (i)*(rectHeight_2+margin) + 2*rectHeight_2/3; })
-				.attr("font-size", rectHeight_2/2)
+				.attr("font-size", function (d) { return d.matchNum == 0 && currSort === "Date" ? rectHeight_2/3 : rectHeight_2/2; })
 				.style("opacity", 1);	
 
 			sec.append("g").selectAll("rectRow_2")
@@ -692,6 +692,10 @@
     		if (currSort === "SecID"){
     			return d.secID;
     		} else if (currSort === "Date") {
+    			if (d.matchNum == 0) {
+    				// no match, so don't show the date
+    				return "No Matches";
+    			}
     			var date = d.date;
     			return (date.getMonth() + 1) + "-" + date.getDate() + "-" + (date.getFullYear() + "").substr(2);
     		} else if (currSort === "Match") {
