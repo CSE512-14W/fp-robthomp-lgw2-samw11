@@ -1379,33 +1379,33 @@
 		t = t.toLowerCase();
 		
 		var lastMismatched = false;
-		var mInd = textA.length - 1;
-		var bInd = docAend - 1;
-		while (mInd >= 0 && bInd >= docAstart) {
+		var mInd = 0;
+		var bInd = docAstart;
+		while (mInd < textA.length && bInd < docAend) {
 			//skip gaps in the textA match
 			if (textA[mInd] == '-') {
-				mInd--;
+				mInd++;
 			//skip extra characters in the original text (likely stripped out punctuation)
 			} else if (textA[mInd] != t[bInd]) {
-				highlightString = baseText[bInd] + highlightString;
-				bInd--;
+				highlightString = highlightString + baseText[bInd];
+				bInd++;
 			//we got a mismatch
 			} else if (textB[mInd] == '-' || textA[mInd] != textB[mInd]) {
 				if (!lastMismatched) {
-					highlightString = "</span>" + highlightString;
+					highlightString = highlightString + "<span style='background-color: " + mismatchColor + "'>";
 				}
-				highlightString = baseText[bInd] + highlightString;
-				mInd--;
-				bInd--;
+				highlightString = highlightString + baseText[bInd];
+				mInd++;
+				bInd++;
 				lastMismatched = true;
 			//the characters matched
 			} else {
 				if (lastMismatched) {
-					highlightString = "<span style='background-color: " + mismatchColor + "'>" + highlightString;
+					highlightString = highlightString + "</span>";
 				}
-				highlightString = baseText[bInd] + highlightString;
-				mInd--;
-				bInd--;
+				highlightString = highlightString + baseText[bInd];
+				mInd++;
+				bInd++;
 				lastMismatched = false;
 			}
 		}
