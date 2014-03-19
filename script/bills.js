@@ -1,10 +1,12 @@
 (function() {
 	/*
-		
+		far right of 78396
 	*/
 	
-	var titleText = "How a bill becomes a law";
+	var titleText = "Idea Tracer";
 	var billNameShort = "PPACA";
+	var explanationText = "Only a small portion of the bills that are introduced in US Congress become law. However, the bills that do become law may sill incorporate policy ideas originating in other bills. Explore the text of House Bill 3590, The Patient Protection and Affordable Care Act, compared side-by side with matching text from other bills introduced in the 111th Congress.";
+	var explanationText2 = "Click and drag the view window in the PPACA overview or scroll to change the sections available for exploration. Click any available section to see an overview chart for that section's matches, dispalying the position within the PPACA text and sponsor congressional group for each text matching. Select a matching to see the texts side by side, highlighted to indicate where the texts are the same and where they differ.";
 	// frame variables
     var height = 720,
 		width = 1080,
@@ -111,6 +113,24 @@
 		.attr("height", height);
 
 	var titleRegion = d3.select("svg");
+
+	var explanationDiv = d3.select("body")
+					.append("div")
+					.attr("id", "explanationDiv")
+					.style({
+						"position": "absolute", 
+						"top": 0 + "px", 
+						"left": (width/4 + margin*2) + "px",
+						"height": titleHeight + "px",
+						"width": 3*width/4 + margin*2+ "px",
+						"font-size": "10px"
+						});
+	
+	explanationDiv.append("p")
+			.text(explanationText);	
+	
+	explanationDiv.append("p")
+			.text(explanationText2);			
 
 	var svg = d3.select("svg")
 				.append("g")
@@ -909,6 +929,7 @@
 		
 		$.getJSON( "data/data.php", { section: secID} )
 			.done(function( data ) {
+				cleanThirdLayer();
 				console.log(data);
 				base = data.sectionText;
 				processThirdLayerData(data);
@@ -1040,6 +1061,34 @@
 					.attr("y", -3)
 					.attr("font-size", 12)
 					.text("Section Matches")
+				
+				chart.append("text")
+					.attr("x", 3*alignChartWidth/4 + 70)
+					.attr("y", -3)
+					.attr("font-size", 10)
+					.text("House Bill: ");
+				
+				chart.append("rect")
+					.attr("x", 3*alignChartWidth/4 + 120)
+					.attr("y", -12)
+					.attr("height", 10)
+					.attr("width", 10)
+					.attr("fill", "none")
+					.attr("stroke", independentColor);
+					
+				chart.append("text")
+					.attr("x", 3*alignChartWidth/4)
+					.attr("y", -3)
+					.attr("font-size", 10)
+					.text("Senate Bill: ");
+				
+				chart.append("rect")
+					.attr("x", 3*alignChartWidth/4 + 50)
+					.attr("y", -12)
+					.attr("height", 10)
+					.attr("width", 10)
+					.attr("fill", independentColor)
+					.attr("stroke", independentColor);
 				
 				//add bars between alignments that separates them by quarters of the year
 				for (var i = 0; i < data.matches.length; i++) {
