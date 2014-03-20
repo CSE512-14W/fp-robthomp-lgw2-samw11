@@ -44,7 +44,7 @@
 	var billNameShort = "PPACA";	// The bill name in the third layer, original bill section
 	var explanationText = "Only a small portion of the bills that are introduced in US Congress become law. However, the bills that do become law may sill incorporate policy ideas originating in other bills. Explore the text of House Bill 3590, The Patient Protection and Affordable Care Act, compared side-by side with matching text from other bills introduced in the 111th Congress.";
 	var explanationText2 = "Click and drag the view window in the PPACA overview or scroll to change the sections available for exploration. Click any available section to see an overview chart for that section's matches, dispalying the position within the PPACA text and sponsor congressional group for each text matching. Select a matching to see the texts side by side, highlighted to indicate where the texts are the same and where they differ.";
-	var maxMatchNum = 50; 	// the maximum matching number show in the boxes in the first and second layer
+	var maxMatchNum = 33; 	// the maximum matching number show in the boxes in the first and second layer
 
 	/***********************************************************************
 	 ***general settings, don't change unless you know what you are doing***
