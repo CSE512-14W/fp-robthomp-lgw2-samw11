@@ -30,7 +30,7 @@ Idea Tracer
 
 ![Overview](overview.png)
 
-Poster is available [here:](https://github.com/CSE512-14W/fp-robthomp-lgw2-samw11/blob/master/poster-robthomp-lgw2-samw11.pdf)
+Poster is available [here:](https://github.com/CSE512-14W/fp-robthomp-lgw2-samw11/blob/master/final/poster-robthomp-lgw2-samw11.pdf)
 
 Final paper is availalbe [here:](https://github.com/CSE512-14W/fp-robthomp-lgw2-samw11/blob/master/final/paper-robthomp-lgw2-samw11.pdf) 
 
