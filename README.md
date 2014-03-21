@@ -28,7 +28,7 @@ Sam:
 Idea Tracer
 ===============
 
-![Overview](overview.png)
+![Overview](summary.png)
 
 Poster is available [here:](https://github.com/CSE512-14W/fp-robthomp-lgw2-samw11/blob/master/final/poster-robthomp-lgw2-samw11.pdf)
 
