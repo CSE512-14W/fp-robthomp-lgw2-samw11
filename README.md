@@ -7,12 +7,19 @@ fp-robthomp-lgw2-samw11
 2. Lucy Williams, lgw2@uw
 3. Sam Wilson, samw11@cs
 
-A breakdown of how the work was split among the group members and a commentary on the research/development process.
+## Development Process
 Rob:
-
+ * todo
+ * 
+ 
 Lucy:
-
-Sam: Design and implement the first layer, second layer and the sort button feature.
+ * todo
+ * 
+ 
+Sam: 
+ * Design and implement the first layer, second layer and the sort button feature.
+ * Comment and refactor the code base.
+ * Poster and paper
   
 Idea Tracer
 ===============
