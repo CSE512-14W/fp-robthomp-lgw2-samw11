@@ -34,9 +34,6 @@
 	 * 9) The details of the matching bill
 	 */
 
-	 /*
-	  * Bug: secId 85946, 85952 for $billID = 447067; and $billVersionID = 10542;
-	  */
 	/***********************************************************************
 	 ********variables that may need to be changed for other bills**********
 	 ***********************************************************************/
