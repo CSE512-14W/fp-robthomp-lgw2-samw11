@@ -7,17 +7,16 @@ fp-robthomp-lgw2-samw11
 2. Lucy Williams, lgw2@uw
 3. Sam Wilson, samw11@cs
 
-Project Name
+A breakdown of how the work was split among the group members and a commentary on the research/development process.
+
+Idea Tracer
 ===============
 
 ![Overview](overview.png)
 
-This is an example repository for the final project submission.  Put your abstract from your final paper here.
+Poster is available [here:](https://github.com/CSE512-14W/fp-robthomp-lgw2-samw11/blob/master/poster-robthomp-lgw2-samw11.pdf)
 
-[Poster](https://github.com/CSE512-14W/fp-robthomp-lgw2-samw11/blob/master/poster-robthomp-lgw2-samw11.pdf),
-[Final Paper](https://github.com/CSE512-14W/fp-jheer-kanitw/raw/master/final/paper-jheer-kanitw.pdf) 
-
-(Acknowledgement: example overview picture from Mike Bostock's Protovis)
+Final paper is availalbe [here:](https://github.com/CSE512-14W/fp-jheer-kanitw/raw/master/final/paper-jheer-kanitw.pdf) 
 
 ## Running Instructions
 
