@@ -13,8 +13,9 @@ Rob:
  * 
  
 Lucy:
- * todo
- * 
+ * Overall design idea generation and critique
+ * Short presentation
+ * Poster and paper
  
 Sam: 
  * Design and implement the first layer, second layer and the sort button feature.
