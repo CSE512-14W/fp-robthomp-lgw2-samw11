@@ -9,8 +9,11 @@ fp-robthomp-lgw2-samw11
 
 ## Development Process
 Rob:
- * todo
- * 
+ * Data scripts
+ * Alignment Graph
+ * Text Highlighting
+ * General Style
+ * Poster and Paper
  
 Lucy:
  * Overall design idea generation and critique
