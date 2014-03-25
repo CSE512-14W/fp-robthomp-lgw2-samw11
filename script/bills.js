@@ -23,7 +23,7 @@
 	/* 
 	 * This visualization consist of 9 different areas.
 	 * 1) Title header (Idea Tracer)
-	 * 2) Sorted by button 
+	 * 2) "Sort by" buttons 
 	 * 3) Explanation Text 
 	 * 4) The most left hand side column (first layer)
 	 * 5) The middle column with lots of rectangular boxes (second layer)
@@ -56,7 +56,7 @@
 		headerHeight = 70,	// the total hight of the header (from titleText to sortby boxes)
 		bodyMargin = 6;		// the margin between this visualization and the browser edge
 
-	// color 
+	// colors
 	var Grey = d3.rgb(200,200,200),
 		Yellow = d3.rgb(255,255,51),
 		LightYellow = d3.rgb(255,255,187),
@@ -362,7 +362,7 @@
 
 	}
 
-	// the window allow between 2nd and 3rd layer
+	// the window arrow between 2nd and 3rd layer
 	function thirdLayerPointer(div){
 		
 		var selectedBox = d3.select("#rectSecId"+clickedId)[0][0].y.animVal.value;
@@ -941,12 +941,14 @@
 	 * @param secID, the section id that user clicked in the second layer
 	 */
 	function thirdLayer(secID){
+		//clean whatever was in the third layer already
 		cleanThirdLayer();
 		
+		//get data based on sectionID from the server
 		$.getJSON( "data/data.php", { section: secID} )
 			.done(function( data ) {
 				cleanThirdLayer();
-				console.log(data);
+				//console.log(data);
 				base = data.sectionText;
 				processThirdLayerData(data);
 				
@@ -962,7 +964,10 @@
 				d3.selectAll(".loadingImageClass").remove();
 			});
 		
-		//TODO: still need to add axis labels
+		/*
+		 * Draw the alignment chart with axis, labels, and bars
+		 * @param data an array of matches
+		 */
 		function drawAlignChart(data) {
 			var lengthScale = d3.scale.linear()
 				.domain([0, data.sectionText.length])
@@ -1208,6 +1213,10 @@
 			}			
 		}
 		
+		/*
+		 * Takes data from the server and calculates the proper text alignment locations
+		 * @param data the initial response from the server
+		 */
 		function processThirdLayerData(data) {
 			for (var i = 0; i < data.matches.length; i++) {
 				
@@ -1228,6 +1237,11 @@
 		// end of the third layer
 	}
 
+	/*
+	 * Write bill info to the bill info window and show highlighted text
+	 * @param d matching data
+	 * @param baseText the formatted text that corresponds to the d matching
+	 */
 	function writeBillInfo(d, baseText) {
 		
 		var highlightString = makeHighlightHTML(baseText, d.docAstart, d.docAend, d.textA, d.textB);
@@ -1290,6 +1304,9 @@
 		$("#matchingBillTextDiv").scrollTop($("#matchingBillTextDiv pre").height() * d.docBstart/d.matchText.length + 68);
 	}
 	
+	/*
+	 * Remove bill info elements from screen
+	 */
 	function cleanBillInfo() {
 		billTextDiv.select(".billText").remove();
 		billInfoDiv.selectAll(".BillInfo").remove();
@@ -1354,6 +1371,11 @@
 		}
 	}
 
+	/*
+	 * Takes a text and a matching string and locates where the matching is within the text
+	 * @param text the original text
+	 * @param match the matching string
+	 */
 	function getMatchIndices(text, match) {
 		var t = text.replace(/<DELETED>/g, "         ");
 		t = t.replace(/<\/DELETED>/g, "          ");
@@ -1387,6 +1409,15 @@
 		}
 	}
 	
+	/*
+	 * Makes an html highlight string within a text that shows matching string location and 
+	 * where in that string the matching differed
+	 * @param baseText the original formatted section text
+	 * @param docAstart the character location where the match string starts
+	 * @param docAend the character location where the match string ends
+	 * @param textA the string matching from the baseText
+	 * @param textB the string matching from the other text (not included here)
+	 */
 	function makeHighlightHTML(baseText, docAstart, docAend, textA, textB) {
 		var highlightString = "";
 		
