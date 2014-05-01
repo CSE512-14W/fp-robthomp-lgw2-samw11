@@ -14,21 +14,23 @@ include that section
 
 #the id of the base bill, only sections from this bill are aggregated, comparisons against
 #this id are ignored (the same bill being compared to different versions of itself)
-$billID = 446419;
+$billID = 447297;
 
 #the id of the version of the base bill, sections of the bill that are not from this 
 #version are not aggregated
-$billVersionID = 10010;
+$billVersionID = 11740;
+
+$billTag = "MTB1";
 
 #this is used as the lower limit for the SWalign field in sectcomp
-$SWalignLimit = 1.0;
+$SWalignLimit = 0;
 
 #this is used as the lower limit for the charMatch field in sectcomp
-$charMatchLimit = 200;
+$charMatchLimit = 0;
 
 #this is used as the lower limit for either the propA or propB fields in sectcomp (at 
 #least one must be above this value)
-$propLimit = 0.7;
+$propLimit = 0;
 
 #the name of the file this script will output
 $outFileName = "layer1.json";
@@ -39,7 +41,7 @@ if (!isset($_GET["section"])) {
 	
 	$query = "(
 		SELECT comp.compID, comp.idA AS secID, bills.IntrDate, bills.Party, bills.BillType
-			FROM bills_sectcomp AS comp, bills_sections AS sect, bills, bills_sections AS sectb
+			FROM bills_sectcompV2 AS comp, bills_sections AS sect, bills, bills_sections AS sectb
 			WHERE comp.idB = sect.sec_id
 				AND sect.Bill_id = bills.id
 				AND comp.idA = sectb.sec_id
@@ -55,7 +57,7 @@ if (!isset($_GET["section"])) {
 		)
 		UNION 
 		(SELECT comp.compID, comp.idB AS secID, bills.IntrDate, bills.Party, bills.BillType
-			FROM bills_sectcomp AS comp, bills_sections AS sect, bills, bills_sections AS sectb
+			FROM bills_sectcompV2 AS comp, bills_sections AS sect, bills, bills_sections AS sectb
 			WHERE comp.idA = sect.sec_id
 				AND sect.Bill_id = bills.id
 				AND comp.idB = sectb.sec_id
@@ -141,7 +143,7 @@ if (!isset($_GET["section"])) {
 } else {
 	$query = "
 		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.textA as baseText, comp.textB as otherText, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText, bills.PLaw, comp.idB, bills.PLawDate
-			FROM bills_sectcomp as comp, bills_sections as sec, bills, bills_secttext as tex
+			FROM bills_sectcompV2 as comp, bills_sections as sec, bills, bills_secttext as tex
 			WHERE comp.idA = " . $_GET["section"] . " 
 				AND sec.Bill_id = bills.id 
 				AND comp.idB = sec.sec_id 
@@ -197,7 +199,7 @@ if (!isset($_GET["section"])) {
 
 	$query = "
 		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.textB as baseText, comp.textA as otherText, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText, bills.PLaw, comp.idA, bills.PLawDate
-			FROM bills_sectcomp as comp, bills_sections as sec, bills, bills_secttext as tex
+			FROM bills_sectcompV2 as comp, bills_sections as sec, bills, bills_secttext as tex
 			WHERE comp.idB = " . $_GET["section"] . " 
 				AND sec.Bill_id = bills.id 
 				AND comp.idA = sec.sec_id 

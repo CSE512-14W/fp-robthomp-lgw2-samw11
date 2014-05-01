@@ -38,10 +38,10 @@
 	 ********variables that may need to be changed for other bills**********
 	 ***********************************************************************/
 
-	var billNameShort = "PPACA";	// The bill name in the third layer, original bill section
-	var explanationText = "Only a small portion of the bills that are introduced in US Congress become law. However, the bills that do become law may sill incorporate policy ideas originating in other bills. Explore the text of House Bill 3590, The Patient Protection and Affordable Care Act, compared side-by side with matching text from other bills introduced in the 111th Congress.";
-	var explanationText2 = "Click and drag the view window in the PPACA overview or scroll to change the sections available for exploration. Click any available section to see an overview chart for that section's matches, dispalying the position within the PPACA text and sponsor congressional group for each text matching. Select a matching to see the texts side by side, highlighted to indicate where the texts are the same and where they differ.";
-	var maxMatchNum = 33; 	// the maximum matching number show in the boxes in the first and second layer
+	var billNameShort = "HR4380MTB";	// The bill name in the third layer, original bill section
+	var explanationText = "This includes all links to this MTB above a certain threshold.";
+	var explanationText2 = "Click and drag the view window in the overview or scroll to change the sections available for exploration. Click any available section to see an overview chart for that section's matches, dispalying the position within the base text and sponsor congressional group for each text matching. Select a matching pair to see the texts side by side, highlighted to indicate where the texts are the same and where they differ.";
+	var maxMatchNum = 50; 	// the maximum matching number show in the boxes in the first and second layer
 
 	/***********************************************************************
 	 ***general settings, don't change unless you know what you are doing***
@@ -959,7 +959,7 @@
 					.html(data.sectionText)
 				
 				textDiv.select("h2")
-					.text("PPACA - Section " + secID);
+					.text("Base Bill - Section " + secID);
 				
 				d3.selectAll(".loadingImageClass").remove();
 			});
@@ -1012,7 +1012,7 @@
 			
 			var markMaxWidth = 10;
 			var markMargin = 4;
-			var markWidth = Math.min(markMaxWidth, (alignChartWidth - markMargin)/data.matches.length - markMargin);
+			var markWidth = Math.max(1, Math.min(markMaxWidth, (alignChartWidth - markMargin)/data.matches.length - markMargin));
 		
 			chart.selectAll("alignments")
 				.data(data.matches)
@@ -1222,6 +1222,8 @@
 				
 				text = data.sectionText;
 				match = data.matches[i].textA;
+				textA = data.matches[i].textA;
+				textB = data.matches[i].textB;
 				var baseInd = getMatchIndices(data.sectionText, data.matches[i].textA);
 				text = data.matches[i].matchText;
 				match = data.matches[i].textB;
@@ -1377,20 +1379,22 @@
 	 * @param match the matching string
 	 */
 	function getMatchIndices(text, match) {
-		var t = text.replace(/<DELETED>/g, "         ");
+		t = text.replace(/<DELETED>/g, "         ");
 		t = t.replace(/<\/DELETED>/g, "          ");
+		t = t.replace(/<plus-minus>/g, "            ");
 		t = t.replace(/[\W|_]/g," ");
 		t = t.toLowerCase();
 		
-		//console.log(t);
-		
 		var m = match.replace(/[\s-]/g,"");
+		m = m.replace(/\\/g,"");
 		
 		if (m.length > 600) {
 			var mStart = m.substr(0,500);
 			var mEnd = m.substr(m.length - 500,m.length);
 			mStart = mStart.split("").join("\\s*");
+			mStart = afterDotOptional(mStart);
 			mEnd = mEnd.split("").join("\\s*");
+			mEnd = afterDotOptional(mEnd);
 			var matchExpStart = new RegExp(mStart, "g");
 			var matchExpEnd = new RegExp(mEnd, "g");
 		
@@ -1399,6 +1403,7 @@
 			return [start, end];
 		} else {
 			m = m.split("").join("\\s*");
+			m = afterDotOptional(m);
 			var matchExp = new RegExp(m, "g");
 		
 			//console.log(matchExp);
@@ -1407,6 +1412,154 @@
 			var end = start + t.match(matchExp)[0].length;
 			return [start, end];
 		}
+	}
+	
+	/*
+	 * Takes a regex string and tries to fix all the known errors from the text comparison output
+	 * @param str the original regex
+	 */
+	function afterDotOptional(str) {
+		ind = str.indexOf("0\\s*1\\s*p\\s*e\\s*r\\s*c\\s*e\\s*n\\s*t\\s*o\\s*f\\s*z\\s*i\\s*n\\s*c");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("1\\s*d\\s*e\\s*c\\s*i\\s*t\\s*e\\s*x");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("2\\s*d\\s*e\\s*c\\s*i\\s*t\\s*e\\s*x\\s*p\\s*e\\s*r\\s*f\\s*i\\s*l\\s*a\\s*m\\s*e\\s*n\\s*t");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("l\\s*i\\s*t\\s*e\\s*r\\s*s\\s*p\\s*r\\s*o\\s*v\\s*i\\s*d\\s*e\\s*d\\s*f\\s*o\\s*r");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("0\\s*5\\s*m\\s*i\\s*c\\s*r\\s*o\\s*n\\s*s\\s*a\\s*n\\s*d\\s*w\\s*i\\s*t\\s*h");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("1\\s*5\\s*m\\s*i\\s*c\\s*r\\s*o\\s*n\\s*s\\s*d\\s*i\\s*a\\s*m\\s*e\\s*t\\s*e\\s*r");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("1\\s*5\\s*m\\s*i\\s*c\\s*r\\s*o\\s*n\\s*s\\s*w\\s*h\\s*i\\s*c\\s*h\\s*r\\s*e\\s*t\\s*a\\s*i\\s*n");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("1\\s*5\\s*m\\s*i\\s*c\\s*r\\s*o\\s*n\\s*s\\s*o\\s*r\\s*l\\s*e\\s*s\\s*s");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("5\\s*9\\s*m\\s*m\\s*t\\s*o\\s*3\\s*5");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("m\\s*m\\s*p\\s*r\\s*o\\s*v\\s*i\\s*d\\s*e\\s*d\\s*f\\s*o\\s*r");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("c\\s*m\\s*o\\s*r\\s*m\\s*o\\s*r\\s*e\\s*i\\s*n\\s*d\\s*i\\s*a\\s*m\\s*e\\s*t\\s*e\\s*r");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("4\\s*0\\s*m\\s*m\\s*o\\s*r\\s*m\\s*o\\s*r\\s*e\\s*b\\s*u\\s*t");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("6\\s*5\\s*m\\s*m\\s*i\\s*n\\s*t\\s*h\\s*i\\s*c\\s*k\\s*n\\s*e\\s*s\\s*s\\s*p\\s*r\\s*e\\s*d");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("0\\s*7\\s*5\\s*m\\s*m\\s*t\\s*o\\s*1\\s*5\\s*0");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("1\\s*5\\s*0\\s*m\\s*m\\s*d\\s*r\\s*i\\s*e\\s*d\\s*t\\s*o\\s*a\\s*m\\s*o\\s*i\\s*s\\s*t");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("1\\s*a\\s*n\\s*d\\s*i\\s*n\\s*s\\s*e\\s*r\\s*t\\s*i\\s*n\\s*g\\s*f\\s*r\\s*e\\s*e\\s*a\\s*n\\s*d\\s*c\\s*b\\s*y\\s*s\\s*t\\s*r\\s*i\\s*k\\s*i\\s*n\\s*g");
+		if (ind != -1) {
+			str = str.substr(0,ind-3) + "?\\s*1\\s*5?" + str.substr(ind+1,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("1\\s*a\\s*n\\s*d\\s*i\\s*n\\s*s\\s*e\\s*r\\s*t\\s*i\\s*n\\s*g\\s*f\\s*r\\s*e\\s*e\\s*a\\s*n\\s*d\\s*3\\s*b\\s*y\\s*s\\s*t\\s*r\\s*i\\s*k\\s*i\\s*n\\s*g");
+		if (ind != -1) {
+			str = str.substr(0,ind-3) + "?\\s*4?\\s*1\\s*5?" + str.substr(ind+1,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("9\\s*9\\s*p\\s*e\\s*r\\s*c\\s*e\\s*n\\s*t\\s*9\\s*h\\s*e\\s*a\\s*d\\s*i\\s*n\\s*g");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("9\\s*9\\s*p\\s*e\\s*r\\s*c\\s*e\\s*n\\s*t\\s*a\\s*i\\s*n\\s*g\\s*e\\s*n\\s*e\\s*r\\s*a\\s*l");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("i\\s*n\\s*t\\s*h\\s*e\\s*c\\s*o\\s*l\\s*u\\s*m\\s*n\\s*1\\s*g\\s*e\\s*n\\s*e\\s*r\\s*a\\s*l\\s*r\\s*a\\s*t\\s*e\\s*o\\s*f");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("a\\s*n\\s*d\\s*i\\s*n\\s*s\\s*e\\s*r\\s*t\\s*i\\s*n\\s*g\\s*1\\s*3\\s*3\\s*4\\s*a\\s*n\\s*d\\s*2");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("64andbbystrikingthedate".split("").join("\\s*"));
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("inthecolumn1generalrateofdutycolumnandinserting1334".split("").join("\\s*"));
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("a\\s*n\\s*d\\s*b\\s*b\\s*y\\s*s\\s*t\\s*r\\s*i\\s*k\\s*i\\s*n\\s*g");
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("64and2bystriking12312009".split("").join("\\s*"));
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("certainacelectricmotorsofanoutputexceeding74".split("").join("\\s*"));
+		if (ind != -1) {
+			str = str.substr(0,ind + "certainacelectricmotorsofanoutputexceeding74".split("").join("\\s*").length) + "\\s*\\d?" + str.substr(ind + "certainacelectricmotorsofanoutputexceeding74".split("").join("\\s*").length, str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("25percentagepoints".split("").join("\\s*"));
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		ind = str.indexOf("75percentagepoints".split("").join("\\s*"));
+		if (ind != -1) {
+			str = str.substr(0,ind) + "\\d?\\s*" + str.substr(ind,str.length);
+			ind = -1;
+		}
+		return str;
 	}
 	
 	/*
@@ -1433,6 +1586,8 @@
 			//skip gaps in the textA match
 			if (textA[mInd] == '-') {
 				mInd++;
+			} else if (t[bInd] == '\\') {
+				bInd++;
 			//skip extra characters in the original text (likely stripped out punctuation)
 			} else if (textA[mInd] != t[bInd]) {
 				highlightString = highlightString + baseText[bInd];
