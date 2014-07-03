@@ -12,25 +12,28 @@ include that section
 
 #return breakdown of house/senate and return full matching bill text
 
+$vars = explode(",", file_get_contents("vars"));
+
+
 #the id of the base bill, only sections from this bill are aggregated, comparisons against
 #this id are ignored (the same bill being compared to different versions of itself)
-$billID = 447297;
+$billID = $vars[0];
 
 #the id of the version of the base bill, sections of the bill that are not from this 
 #version are not aggregated
-$billVersionID = 11740;
+$billVersionID = $vars[1];
 
 $billTag = "MTB1";
 
 #this is used as the lower limit for the SWalign field in sectcomp
-$SWalignLimit = 0;
+$SWalignLimit = $vars[2];
 
 #this is used as the lower limit for the charMatch field in sectcomp
-$charMatchLimit = 0;
+$charMatchLimit = $vars[3];
 
 #this is used as the lower limit for either the propA or propB fields in sectcomp (at 
 #least one must be above this value)
-$propLimit = 0;
+$propLimit = $vars[4];
 
 #the name of the file this script will output
 $outFileName = "layer1.json";
@@ -140,6 +143,8 @@ if (!isset($_GET["section"])) {
 	#if the query was faster you could use it to dynamically request data and send it to the client
 	#but as things are the query takes about 30mins and so the data must be saved to file for later
 	file_put_contents($outFileName, json_encode($out));
+	
+	echo("Data calculation complete!");
 } else {
 	$query = "
 		(SELECT comp.compID, comp.charMatch, comp.gaps, comp.SWalign, comp.textA as baseText, comp.textB as otherText, comp.compLabel, bills.IntrDate, bills.Party, bills.URL, bills.BillNum, bills.BillType, bills.NameFull, bills.Postal, tex.text as BillText, bills.PLaw, comp.idB, bills.PLawDate
